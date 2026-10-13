@@ -1,0 +1,37 @@
+
+---
+
+## 🎬 LANGKAH DEPLOY
+
+### Fase 1: Update Backend GAS
+
+1. Buka Apps Script editor
+2. Tambahkan blok `doPost`, `routeApi`, `jsonResponse`, dan `doGet` baru di **paling bawah** `Code.gs`
+3. **Simpan** (Ctrl+S)
+4. **Deploy → Manage deployments → Edit → Version: New version → Deploy**
+5. **Copy URL** (akhiran `/exec`)
+6. **Test**: buka URL di browser → harus muncul JSON `{isOk: true, message: "Rekap Hafalan API"}`
+
+### Fase 2: Setup GitHub Repo
+
+1. Buka [github.com/new](https://github.com/new)
+2. Nama repo: `rekap-hafalan-santri`
+3. **Public** (agar GitHub Pages gratis)
+4. Jangan init README
+5. Klik **Create repository**
+
+### Fase 3: Upload Files
+
+**Cara A — Via web (mudah):**
+1. Di halaman repo, klik **Add file → Upload files**
+2. Upload semua file sesuai struktur
+3. Commit
+
+**Cara B — Via Git (recommended):**
+```bash
+git clone https://github.com/USERNAME/rekap-hafalan-santri.git
+cd rekap-hafalan-santri
+# Copy semua file ke sini
+git add .
+git commit -m "Initial commit"
+git push
