@@ -4,7 +4,7 @@
 // Ganti dengan URL deployment Apps Script Anda
 // (yang berakhiran /exec)
 window.APP_CONFIG = {
-  gasUrl: 'https://script.google.com/macros/s/AKfycbzN7HX2xctDHUxYYHlh7DG2J-VZLoxJYm8rlWrNfjRc1pNXeL4qXd4WlxxTcb7uLw_fGw/exec',
+  gasUrl: 'https://script.google.com/macros/s/AKfycbzd0nAN62cpSg2HAhVtrbKQEQYZ_-TXRl9ABTQTnqo1Rhs3FEVaciMLvikUdnKV0l_dLg/exec',
   appName: 'Rekap Hafalan Santri',
   version: '2.0.0'
 };
