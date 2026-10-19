@@ -37,25 +37,9 @@ function showToastBaru(message, type = 'success') {
  * ==========================================
  */
 function openPecahModal(presetAsal = '', presetTujuan = '') {
-  const halaqahList = [...new Set(masterSantri.map(s => s.halaqah))].sort();
-  
-  const selAsal = document.getElementById('select-asal');
-  const selTujuan = document.getElementById('select-tujuan');
-  
-  selAsal.innerHTML = '<option value="">-- Pilih Asal --</option>' + halaqahList.map(h => `<option value="${h}">${h}</option>`).join('');
-  selTujuan.innerHTML = '<option value="">-- Pilih Tujuan --</option>' + halaqahList.map(h => `<option value="${h}">${h}</option>`).join('');
-
-  if (presetAsal) selAsal.value = presetAsal;
-  if (presetTujuan) selTujuan.value = presetTujuan;
-
-  pecahState = { asal: presetAsal, tujuan: presetTujuan, selectedIds: new Set(), allSantri: [] };
-  
-  document.getElementById('search-santri-pecah').value = '';
-  document.getElementById('modal-pecah').classList.remove('hidden');
-  document.getElementById('modal-pecah').classList.add('flex');
-  
-  if (presetAsal) loadSantriPecah(presetAsal);
-}
+  // KODE BARU (Ambil dari fungsi halaqahList bawaan app.js)
+  const halaqahData = halaqahList(); 
+  const halaqahList = halaqahData.map(h => h.nama).sort((a,b) => a.localeCompare(b, "id", {numeric: true}));
 
 function loadSantriPecah(asal) {
   pecahState.asal = asal;
