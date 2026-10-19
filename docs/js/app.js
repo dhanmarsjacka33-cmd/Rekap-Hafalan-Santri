@@ -105,19 +105,6 @@ function getHalaqahName(s) {
 // SDK - GAS COMMUNICATION
 // ============================================================
 
-function refreshData() {
-  google.script.run.withSuccessHandler(data => {
-    records = data || [];
-    google.script.run.withSuccessHandler(md => {
-      if (md.isOk) {
-        masterSantri = md.santri || [];
-        masterHalaqah = md.halaqah || [];
-      }
-      render();
-    }).getMasterData();
-  }).getData();
-}
-
 // ============================================================
 // NAVIGATION
 // ============================================================
