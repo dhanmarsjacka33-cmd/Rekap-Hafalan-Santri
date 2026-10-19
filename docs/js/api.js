@@ -11,12 +11,15 @@ async function gasCall(action, payload = {}, options = {}) {
   try {
     if (window.DEBUG) console.log('[gasCall]', action, payload);
     
+    // Gunakan URLSearchParams agar tidak memicu CORS Preflight
+    const formData = new URLSearchParams();
+    formData.append('action', action);
+    formData.append('payload', JSON.stringify(payload));
+    
     const res = await fetch(window.APP_CONFIG.gasUrl, {
       method: 'POST',
-      body: JSON.stringify({ action, payload }),
+      body: formData,
       signal: controller.signal,
-      // Tidak set Content-Type → hindari preflight CORS
-      // (GAS mengembalikan 'Access-Control-Allow-Origin: *' untuk public web app)
     });
 
     clearTimeout(timer);
@@ -28,7 +31,6 @@ async function gasCall(action, payload = {}, options = {}) {
       if (window.DEBUG) console.log('[gasCall] result', json);
       return json;
     } catch (e) {
-      // Kadang GAS membungkus JSON dengan HTML
       const match = text.match(/\{[\s\S]*\}/);
       if (match) return JSON.parse(match[0]);
       throw new Error('Response bukan JSON: ' + text.substring(0, 200));
