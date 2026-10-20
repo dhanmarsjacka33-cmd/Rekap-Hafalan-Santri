@@ -1,8 +1,8 @@
 // Tambahkan ini di baris paling atas app.js
-let records = [];
-let masterSantri = [];
-let masterHalaqah = [];
-
+// Gunakan variabel dari api.js
+window.records = window.records || [];
+window.masterSantri = window.masterSantri || [];
+window.masterHalaqah = window.masterHalaqah || [];
 
 // ... (kode di bawahnya tetap sama)
 // ============================================================
