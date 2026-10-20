@@ -1,3 +1,10 @@
+// Tambahkan ini di baris paling atas app.js
+let records = [];
+let masterSantri = [];
+let masterHalaqah = [];
+
+let selectedStudent = null;
+// ... (kode di bawahnya tetap sama)
 // ============================================================
 // GLOBAL STATE
 // ============================================================
@@ -293,7 +300,7 @@ function renderRoster() {
     const att = node.querySelector(".row-attendance");
     att.value = attendanceFor(student);
     node.querySelector(".save-attendance").addEventListener("click", () => saveAttendance(student, att));
-    node.querySelector(".open-setoran").addEventListener("click", () => openSetoran(student));
+    node.querySelector(".open-setoran").addEventListener("click", () => window.openSetoran(student));
     node.querySelector(".open-ujian").addEventListener("click", () => openUjian(student));
     node.querySelector(".edit-student").addEventListener("click", () => openProfileModal("student", student));
     node.querySelector(".delete-student").addEventListener("click", e => deleteStudent(student, e.currentTarget));

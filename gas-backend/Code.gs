@@ -1,12 +1,24 @@
 /**
+ * ============================================================
  * SISTEM REKAP HAFALAN SANTRI - BACKEND
- * 
+ * Versi 2.0 — Response standar (isOk), bulk mutation, riwayat setoran
+ * ============================================================
+ *
  * Sheets:
- *  - Database       : Aktivitas harian
+ *  - Database       : Aktivitas harian (setoran, kehadiran, mutasi, dll)
  *  - Master_Santri  : Master data santri
  *  - Master_Halaqah : Master data halaqah
+ *
+ * Perubahan v2.0:
+ *  - Semua respons API standar: { isOk: bool, ... } (tidak campur isError)
+ *  - Endpoint baru: mutateSantriBulk (atomik), getRiwayatSetoran
+ *  - processBulkAttendance: bug loop dinamis diperbaiki
+ *  - doGet: satu fungsi, support HTML fallback + API via ?action=
  */
 
+// ============================================================
+// KONSTANTA
+// ============================================================
 const SHEET_NAME = 'Database';
 const HEADERS = ['ID','Nama Santri','Kelas','Halaqah','Tanggal','Juz','Surah','Ayat','Jumlah Baris','Status','Evaluasi','Tipe','Kehadiran'];
 
@@ -18,17 +30,81 @@ const H_MASTER_HALAQAH = ['ID','Nama','Guru','Status','Sumber'];
 // ============================================================
 // WEB APP ENTRY
 // ============================================================
-function doGet() {
-  ensureAllSheets();
-  return HtmlService.createTemplateFromFile('Index')
-    .evaluate()
-    .setTitle('Rekap Hafalan Santri')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+function doGet(e) {
+  // Mode API via query string ?action=xxx (untuk testing & fallback)
+  if (e && e.parameter && e.parameter.action) {
+    try {
+      const payload = e.parameter.payload ? JSON.parse(e.parameter.payload) : {};
+      return jsonResponse(routeApi(e.parameter.action, payload));
+    } catch (err) {
+      return jsonResponse(err(err.toString()));
+    }
+  }
+
+  // Fallback: serve HTML lama jika Index.html masih ada
+  try {
+    ensureAllSheets();
+    return HtmlService.createTemplateFromFile('Index')
+      .evaluate()
+      .setTitle('Rekap Hafalan Santri')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (err) {
+    return jsonResponse(ok({
+      message: 'Rekap Hafalan API',
+      ts: new Date().toISOString(),
+      hint: 'POST dengan URLSearchParams {action, payload}'
+    }));
+  }
+}
+
+function doPost(e) {
+  try {
+    let req;
+    if (e.parameter && e.parameter.action) {
+      req = {
+        action: e.parameter.action,
+        payload: e.parameter.payload ? JSON.parse(e.parameter.payload) : {}
+      };
+    } else if (e.postData && e.postData.contents) {
+      req = JSON.parse(e.postData.contents);
+    } else {
+      return jsonResponse(err('No payload received'));
+    }
+
+    const result = routeApi(req.action, req.payload);
+    return jsonResponse(result);
+  } catch (errObj) {
+    return jsonResponse(err(errObj.toString()));
+  }
 }
 
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// ============================================================
+// RESPONSE HELPERS — standarkan isOk di seluruh API
+// ============================================================
+function ok(data) {
+  return Object.assign({ isOk: true }, data || {});
+}
+
+function err(message, extra) {
+  return Object.assign(
+    { isOk: false, isError: true, message: String(message || 'Error') },
+    extra || {}
+  );
+}
+
+/**
+ * Normalisasi respons CRUD lama yang masih pakai {isError:true}.
+ * Membuat semua respons API punya field isOk yang konsisten.
+ */
+function wrap(r) {
+  if (!r) return err('Empty response');
+  if (r.isOk) return r;
+  return err(r.message || 'Operasi gagal');
 }
 
 // ============================================================
@@ -57,22 +133,22 @@ function getMasterData() {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sRows = ss.getSheetByName(SH_MASTER_SANTRI).getDataRange().getValues();
     const hRows = ss.getSheetByName(SH_MASTER_HALAQAH).getDataRange().getValues();
-    
+
     const santri = sRows.slice(1).filter(r => r[0]).map(r => ({
-      id: String(r[0]||''), nama: String(r[1]||''), kelas: String(r[2]||''),
-      halaqah: String(r[3]||''), foto: String(r[4]||''),
-      status: String(r[5]||'Aktif'), sumber: String(r[6]||''), catatan: String(r[7]||'')
+      id: String(r[0] || ''), nama: String(r[1] || ''), kelas: String(r[2] || ''),
+      halaqah: String(r[3] || ''), foto: String(r[4] || ''),
+      status: String(r[5] || 'Aktif'), sumber: String(r[6] || ''), catatan: String(r[7] || '')
     }));
-    
+
     const halaqah = hRows.slice(1).filter(r => r[0]).map(r => ({
-      id: String(r[0]||''), nama: String(r[1]||''), guru: String(r[2]||''),
-      status: String(r[3]||'Aktif'), sumber: String(r[4]||'')
+      id: String(r[0] || ''), nama: String(r[1] || ''), guru: String(r[2] || ''),
+      status: String(r[3] || 'Aktif'), sumber: String(r[4] || '')
     }));
-    
-    return { isOk: true, santri: santri, halaqah: halaqah };
-  } catch(e) {
+
+    return ok({ santri: santri, halaqah: halaqah });
+  } catch (e) {
     Logger.log('getMasterData: ' + e);
-    return { isOk: false, santri: [], halaqah: [], message: e.toString() };
+    return err(e.toString(), { santri: [], halaqah: [] });
   }
 }
 
@@ -86,10 +162,10 @@ function createSantri(data) {
     ensureAllSheets();
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_MASTER_SANTRI);
     const id = data.id || Utilities.getUuid();
-    sheet.appendRow([id, data.nama||'', data.kelas||'', data.halaqah||'',
-                     data.foto||'', data.status||'Aktif', data.sumber||'custom', data.catatan||'']);
-    return { isOk: true, id: id };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    sheet.appendRow([id, data.nama || '', data.kelas || '', data.halaqah || '',
+                     data.foto || '', data.status || 'Aktif', data.sumber || 'custom', data.catatan || '']);
+    return ok({ id: id });
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -99,22 +175,28 @@ function updateSantri(data) {
     lock.waitLock(10000);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_MASTER_SANTRI);
     const rows = sheet.getDataRange().getValues();
+
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]) === String(data.id)) {
         const oldName = String(rows[i][1]);
         const newName = data.nama || oldName;
-        sheet.getRange(i + 1, 1, 1, H_MASTER_SANTRI.length).setValues([[
-          data.id, newName, data.kelas||'', data.halaqah||'',
-          data.foto !== undefined ? data.foto : (rows[i][4]||''),
-          data.status || 'Aktif', data.sumber || rows[i][6] || 'custom',
-          data.catatan !== undefined ? data.catatan : (rows[i][7]||'')
-        ]]);
+
+        sheet.getRange(i + 1, 1).setValue(data.id);
+        sheet.getRange(i + 1, 2).setValue(newName);
+        sheet.getRange(i + 1, 3).setValue(data.kelas || '');
+        sheet.getRange(i + 1, 4).setValue(data.halaqah || '');
+
+        if (data.foto !== undefined) sheet.getRange(i + 1, 5).setValue(data.foto);
+        sheet.getRange(i + 1, 6).setValue(data.status || 'Aktif');
+        sheet.getRange(i + 1, 7).setValue(data.sumber || rows[i][6] || 'custom');
+        sheet.getRange(i + 1, 8).setValue(data.catatan !== undefined ? data.catatan : (rows[i][7] || ''));
+
         if (oldName !== newName) syncSantriNameInDb(oldName, newName);
-        return { isOk: true };
+        return ok({});
       }
     }
-    return { isError: true, message: 'Santri tidak ditemukan' };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return err('Santri tidak ditemukan');
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -127,11 +209,11 @@ function deleteSantri(data) {
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]) === String(data.id)) {
         sheet.getRange(i + 1, 6).setValue('Nonaktif');
-        return { isOk: true };
+        return ok({});
       }
     }
-    return { isError: true, message: 'Santri tidak ditemukan' };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return err('Santri tidak ditemukan');
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -142,7 +224,63 @@ function syncSantriNameInDb(oldName, newName) {
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][1]) === oldName) sheet.getRange(i + 1, 2).setValue(newName);
     }
-  } catch(e) { Logger.log('syncSantriName: ' + e); }
+  } catch (e) { Logger.log('syncSantriName: ' + e); }
+}
+
+// ============================================================
+// MUTASI MASSAL SANTRI (untuk fitur Pecah Halaqah)
+// Payload: { items: [{ santriId, halaqahBaru }, ...] }
+// Atomik: validasi semua dulu, baru apply. Kalau ada yang invalid,
+//         tidak ada satu pun yang berubah.
+// ============================================================
+function mutateSantriBulk(data) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    const items = (data && data.items) || [];
+    if (!Array.isArray(items) || items.length === 0) {
+      return err('items kosong atau bukan array');
+    }
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_MASTER_SANTRI);
+    if (!sheet) return err('Sheet Master_Santri tidak ditemukan');
+
+    const rows = sheet.getDataRange().getValues();
+    const rowNumById = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0]) rowNumById.set(String(rows[i][0]), i + 1);
+    }
+
+    // ---- VALIDASI (all-or-nothing) ----
+    const errors = [];
+    const planned = [];
+    for (const it of items) {
+      const id = String(it.santriId || '');
+      if (!id) { errors.push('santriId kosong'); continue; }
+      const rowNum = rowNumById.get(id);
+      if (!rowNum) { errors.push('Santri ' + id + ' tidak ditemukan'); continue; }
+      if (!it.halaqahBaru) { errors.push('Santri ' + id + ': halaqahBaru kosong'); continue; }
+      planned.push({ rowNum, santriId: id, halaqahBaru: String(it.halaqahBaru) });
+    }
+    if (errors.length > 0) {
+      return err('Validasi gagal, tidak ada yang diubah', { errors: errors });
+    }
+
+    // ---- APPLY ----
+    planned.forEach(p => {
+      sheet.getRange(p.rowNum, 4).setValue(p.halaqahBaru);
+    });
+
+    return ok({
+      updated: planned.length,
+      results: planned.map(p => ({ santriId: p.santriId, halaqahBaru: p.halaqahBaru, ok: true }))
+    });
+  } catch (e) {
+    Logger.log('mutateSantriBulk: ' + e);
+    return err(e.toString());
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // ============================================================
@@ -155,9 +293,9 @@ function createHalaqah(data) {
     ensureAllSheets();
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SH_MASTER_HALAQAH);
     const id = data.id || Utilities.getUuid();
-    sheet.appendRow([id, data.nama||'', data.guru||'', data.status||'Aktif', data.sumber||'custom']);
-    return { isOk: true, id: id };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    sheet.appendRow([id, data.nama || '', data.guru || '', data.status || 'Aktif', data.sumber || 'custom']);
+    return ok({ id: id });
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -172,15 +310,15 @@ function updateHalaqah(data) {
         const oldName = String(rows[i][1]);
         const newName = data.nama || oldName;
         sheet.getRange(i + 1, 1, 1, H_MASTER_HALAQAH.length).setValues([[
-          data.id, newName, data.guru||'', data.status||'Aktif',
+          data.id, newName, data.guru || '', data.status || 'Aktif',
           data.sumber || rows[i][4] || 'custom'
         ]]);
         if (oldName !== newName) syncHalaqahName(oldName, newName);
-        return { isOk: true };
+        return ok({});
       }
     }
-    return { isError: true, message: 'Halaqah tidak ditemukan' };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return err('Halaqah tidak ditemukan');
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -193,11 +331,11 @@ function deleteHalaqah(data) {
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]) === String(data.id)) {
         sheet.getRange(i + 1, 4).setValue('Nonaktif');
-        return { isOk: true };
+        return ok({});
       }
     }
-    return { isError: true, message: 'Halaqah tidak ditemukan' };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return err('Halaqah tidak ditemukan');
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -214,7 +352,7 @@ function syncHalaqahName(oldName, newName) {
     for (let i = 1; i < dRows.length; i++) {
       if (String(dRows[i][3]) === oldName) dbSheet.getRange(i + 1, 4).setValue(newName);
     }
-  } catch(e) { Logger.log('syncHalaqahName: ' + e); }
+  } catch (e) { Logger.log('syncHalaqahName: ' + e); }
 }
 
 // ============================================================
@@ -227,14 +365,14 @@ function getData() {
     const data = sheet.getDataRange().getValues();
     if (data.length <= 1) return [];
     return data.slice(1).map(row => ({
-      __backendId: String(row[0]||''), nama_santri: String(row[1]||''),
-      kelas: String(row[2]||''), halaqah: String(row[3]||''),
-      tanggal: row[4] instanceof Date ? row[4].toISOString() : String(row[4]||''),
-      juz: String(row[5]||''), surah: String(row[6]||''), ayat: String(row[7]||''),
-      jumlah_baris: Number(row[8])||0, status: String(row[9]||''),
-      evaluasi: String(row[10]||''), tipe: String(row[11]||''), kehadiran: String(row[12]||'')
+      __backendId: String(row[0] || ''), nama_santri: String(row[1] || ''),
+      kelas: String(row[2] || ''), halaqah: String(row[3] || ''),
+      tanggal: row[4] instanceof Date ? row[4].toISOString() : String(row[4] || ''),
+      juz: String(row[5] || ''), surah: String(row[6] || ''), ayat: String(row[7] || ''),
+      jumlah_baris: Number(row[8]) || 0, status: String(row[9] || ''),
+      evaluasi: String(row[10] || ''), tipe: String(row[11] || ''), kehadiran: String(row[12] || '')
     }));
-  } catch(e) { Logger.log('getData: ' + e); return []; }
+  } catch (e) { Logger.log('getData: ' + e); return []; }
 }
 
 function createRecord(data) {
@@ -243,12 +381,12 @@ function createRecord(data) {
     lock.waitLock(10000);
     const sheet = getDbSheet();
     const id = Utilities.getUuid();
-    sheet.appendRow([id, data.nama_santri||'', data.kelas||'', data.halaqah||'',
-                     data.tanggal || new Date().toISOString(), data.juz||'', data.surah||'',
-                     data.ayat||'', data.jumlah_baris||0, data.status||'',
-                     data.evaluasi||'', data.tipe||'', data.kehadiran||'']);
-    return { isOk: true, id: id };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    sheet.appendRow([id, data.nama_santri || '', data.kelas || '', data.halaqah || '',
+                     data.tanggal || new Date().toISOString(), data.juz || '', data.surah || '',
+                     data.ayat || '', data.jumlah_baris || 0, data.status || '',
+                     data.evaluasi || '', data.tipe || '', data.kehadiran || '']);
+    return ok({ id: id });
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -265,11 +403,11 @@ function updateRecord(data) {
           data.tanggal, data.juz, data.surah, data.ayat,
           data.jumlah_baris, data.status, data.evaluasi, data.tipe, data.kehadiran
         ]]);
-        return { isOk: true };
+        return ok({});
       }
     }
-    return { isError: true, message: 'Record tidak ditemukan' };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return err('Record tidak ditemukan');
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
@@ -282,15 +420,18 @@ function deleteRecord(data) {
     for (let i = 1; i < rows.length; i++) {
       if (String(rows[i][0]) === String(data.__backendId)) {
         sheet.deleteRow(i + 1);
-        return { isOk: true };
+        return ok({});
       }
     }
-    return { isError: true, message: 'Record tidak ditemukan' };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return err('Record tidak ditemukan');
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
 }
 
-// FIXED: Skip Alfa jika santri sudah setoran di tanggal sama
+// ============================================================
+// BULK ATTENDANCE
+// Logika: skip Alfa jika santri sudah setoran (setoran_kehadiran) di tanggal sama
+// ============================================================
 function processBulkAttendance(attendances) {
   const lock = LockService.getScriptLock();
   try {
@@ -298,19 +439,19 @@ function processBulkAttendance(attendances) {
     const sheet = getDbSheet();
     const rows = sheet.getDataRange().getValues();
     let updatedCount = 0, addedCount = 0, skippedCount = 0;
-    
+
     attendances.forEach(att => {
       let foundIndex = -1, hasSetoran = false;
       const attDateString = String(att.tanggal).split('T')[0];
-      
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (String(row[1]) !== String(att.nama_santri)) continue;
         const rowDateString = row[4] instanceof Date
-          ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), "yyyy-MM-dd")
+          ? Utilities.formatDate(row[4], Session.getScriptTimeZone(), 'yyyy-MM-dd')
           : String(row[4]).split('T')[0];
         if (rowDateString !== attDateString) continue;
-        
+
         const tipe = String(row[11] || '').trim();
         if (tipe === 'setoran_kehadiran') {
           hasSetoran = true;
@@ -318,22 +459,132 @@ function processBulkAttendance(attendances) {
         }
         if (tipe === 'kehadiran' && foundIndex === -1) foundIndex = i;
       }
-      
+
       if (foundIndex !== -1) {
         sheet.getRange(foundIndex + 1, 13).setValue(att.kehadiran);
         rows[foundIndex][12] = att.kehadiran;
         updatedCount++;
       } else if (!hasSetoran || att.kehadiran !== 'Alfa') {
         const id = Utilities.getUuid();
-        const newRow = [id, att.nama_santri, att.kelas||'', att.halaqah||'',
+        const newRow = [id, att.nama_santri, att.kelas || '', att.halaqah || '',
                        att.tanggal, '', '', '', 0, '', '', 'kehadiran', att.kehadiran];
-        sheet.appendRow(newRow); rows.push(newRow);
+        sheet.appendRow(newRow);
+        rows.push(newRow);
         addedCount++;
       }
     });
-    return { isOk: true, message: `Update: ${updatedCount}, Tambah: ${addedCount}, Skip: ${skippedCount}` };
-  } catch(e) { return { isError: true, message: e.toString() }; }
+    return ok({ message: 'Update: ' + updatedCount + ', Tambah: ' + addedCount + ', Skip: ' + skippedCount });
+  } catch (e) { return err(e.toString()); }
   finally { lock.releaseLock(); }
+}
+
+// ============================================================
+// RIWAYAT SETORAN TERAKHIR (untuk panel input setoran)
+// Payload: { santriNama, limit?, sebelumTanggal? }
+// Catatan: Database menyimpan nama_santri, bukan santriId.
+// ============================================================
+function getRiwayatSetoran(data) {
+  try {
+    const santriNama = String((data && data.santriNama) || '').trim();
+    const limit = Math.min(Number((data && data.limit) || 5), 50);
+    const sebelumTanggal = data && data.sebelumTanggal ? new Date(data.sebelumTanggal) : null;
+
+    if (!santriNama) return err('santriNama wajib diisi');
+
+    const sheet = getDbSheet();
+    if (!sheet) return ok({ records: [], total: 0 });
+
+    const rows = sheet.getDataRange().getValues();
+    const matches = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (String(row[1] || '') !== santriNama) continue;
+
+      const tipe = String(row[11] || '');
+      if (tipe !== 'setoran' && tipe !== 'setoran_kehadiran') continue;
+
+      const tgl = row[4] instanceof Date ? row[4] : new Date(row[4]);
+      if (sebelumTanggal && tgl >= sebelumTanggal) continue;
+
+      matches.push({
+        tanggal: tgl.toISOString(),
+        juz: String(row[5] || ''),
+        surah: String(row[6] || ''),
+        ayat: String(row[7] || ''),
+        jumlahBaris: Number(row[8]) || 0,
+        status: String(row[9] || ''),
+        evaluasi: String(row[10] || ''),
+        tipe: tipe,
+        kehadiran: String(row[12] || '')
+      });
+    }
+
+    matches.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    return ok({ records: matches.slice(0, limit), total: matches.length });
+  } catch (e) {
+    Logger.log('getRiwayatSetoran: ' + e);
+    return err(e.toString());
+  }
+}
+
+// ============================================================
+// API ROUTER
+// ============================================================
+function routeApi(action, payload) {
+  try {
+    switch (action) {
+      case 'ping':
+        return ok({ message: 'pong', ts: new Date().toISOString() });
+
+      case 'getAll': {
+        const md = getMasterData();
+        if (!md.isOk) return err(md.message || 'Gagal baca master');
+        return ok({
+          records: getData(),
+          masterSantri: md.santri || [],
+          masterHalaqah: md.halaqah || []
+        });
+      }
+
+      case 'getData':       return ok({ records: getData() });
+      case 'getMasterData': return getMasterData();
+
+      case 'createRecord':          return wrap(createRecord(payload));
+      case 'updateRecord':          return wrap(updateRecord(payload));
+      case 'deleteRecord':          return wrap(deleteRecord(payload));
+      case 'processBulkAttendance': return wrap(processBulkAttendance(payload));
+
+      case 'createSantri':  return wrap(createSantri(payload));
+      case 'updateSantri':  return wrap(updateSantri(payload));
+      case 'deleteSantri':  return wrap(deleteSantri(payload));
+
+      case 'createHalaqah': return wrap(createHalaqah(payload));
+      case 'updateHalaqah': return wrap(updateHalaqah(payload));
+      case 'deleteHalaqah': return wrap(deleteHalaqah(payload));
+
+      case 'mutateSantriBulk': return mutateSantriBulk(payload);
+      case 'getRiwayatSetoran': return getRiwayatSetoran(payload);
+
+      default:
+        return err('Unknown action: ' + action);
+    }
+  } catch (e) {
+    Logger.log('routeApi error [' + action + ']: ' + e);
+    return err(e.toString());
+  }
+}
+
+function jsonResponse(obj) {
+  const output = ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+  
+  // 👇 Tambahkan header CORS agar diizinkan diakses dari GitHub Pages
+  return output.setHeaders({
+    'Access-Control-Allow-Origin': '*', // Atau ganti '*' dengan 'https://dhanmarsjacka33-cmd.github.io' untuk lebih aman
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  });
 }
 
 // ============================================================
@@ -380,29 +631,27 @@ function runMigrationOnce() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sSheet = ss.getSheetByName(SH_MASTER_SANTRI);
   const hSheet = ss.getSheetByName(SH_MASTER_HALAQAH);
-  
+
   if (sSheet.getLastRow() > 1 || hSheet.getLastRow() > 1) {
     const msg = '⚠️ Master sheet sudah berisi data. Migrasi dibatalkan.';
     Logger.log(msg);
     return msg;
   }
-  
-  // ── Baca delta records lama ──
+
   const dbSheet = getDbSheet();
   const dbData = dbSheet ? dbSheet.getDataRange().getValues().slice(1) : [];
   const records = dbData.map(row => ({
-    tipe: String(row[11]||''),
-    nama_santri: String(row[1]||''),
-    kelas: String(row[2]||''),
-    halaqah: String(row[3]||''),
-    juz: String(row[5]||''),
-    surah: String(row[6]||''),
-    status: String(row[9]||''),
-    evaluasi: String(row[10]||''),
+    tipe: String(row[11] || ''),
+    nama_santri: String(row[1] || ''),
+    kelas: String(row[2] || ''),
+    halaqah: String(row[3] || ''),
+    juz: String(row[5] || ''),
+    surah: String(row[6] || ''),
+    status: String(row[9] || ''),
+    evaluasi: String(row[10] || ''),
     tanggal: row[4]
   }));
-  
-  // ── Bangun halaqah map ──
+
   const halaqahMap = new Map();
   SEED_HALAQAH.forEach(h => {
     halaqahMap.set(h.nama.toLowerCase().trim(), {
@@ -419,8 +668,7 @@ function runMigrationOnce() {
     const key = String(r.evaluasi).toLowerCase().trim();
     if (halaqahMap.has(key)) halaqahMap.get(key).status = 'Nonaktif';
   });
-  
-  // ── Bangun santri map ──
+
   const santriMap = new Map();
   SEED_SANTRI.forEach(s => {
     const nama = String(s[0]).trim();
@@ -453,48 +701,52 @@ function runMigrationOnce() {
     if (santriMap.has(key)) santriMap.get(key).status = 'Nonaktif';
   });
   records.filter(r => r.tipe === 'mutasi_tahfidz')
-    .sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal))
+    .sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal))
     .forEach(m => {
       const key = String(m.nama_santri).trim().toLowerCase();
       if (santriMap.has(key) && m.juz) santriMap.get(key).halaqah = m.juz;
     });
-  
-  // ── Tulis ke sheet ──
+
   const hRows = [...halaqahMap.values()].map(h => [h.id, h.nama, h.guru, h.status, h.sumber]);
   if (hRows.length > 0) hSheet.getRange(2, 1, hRows.length, H_MASTER_HALAQAH.length).setValues(hRows);
-  
+
   const sRows = [...santriMap.values()].map(s => [s.id, s.nama, s.kelas, s.halaqah, s.foto, s.status, s.sumber, s.catatan]);
   if (sRows.length > 0) sSheet.getRange(2, 1, sRows.length, H_MASTER_SANTRI.length).setValues(sRows);
-  
-  const msg = `✅ Migrasi selesai: ${sRows.length} santri, ${hRows.length} halaqah`;
+
+  const msg = '✅ Migrasi selesai: ' + sRows.length + ' santri, ' + hRows.length + ' halaqah';
   Logger.log(msg);
   return msg;
 }
+
+// ============================================================
+// DIAGNOSTIK & UTIL
+// ============================================================
 function diagnosticMasterSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const report = [];
-  
+
   ['Master_Santri', 'Master_Halaqah'].forEach(name => {
     const sh = ss.getSheetByName(name);
     if (!sh) {
-      report.push(`❌ ${name}: TIDAK ADA`);
+      report.push('❌ ' + name + ': TIDAK ADA');
       return;
     }
     const lastRow = sh.getLastRow();
     const lastCol = sh.getLastColumn();
     const headers = lastRow >= 1 ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-    report.push(`✅ ${name}: ${lastRow - 1} baris data, ${lastCol} kolom`);
-    report.push(`   Header: [${headers.join(' | ')}]`);
+    report.push('✅ ' + name + ': ' + (lastRow - 1) + ' baris data, ' + lastCol + ' kolom');
+    report.push('   Header: [' + headers.join(' | ') + ']');
   });
-  
+
   const msg = report.join('\n');
   Logger.log(msg);
   return msg;
 }
+
 function emergencyResetMasterSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  
+
   const resp = ui.alert(
     '⚠️ HAPUS & BUAT ULANG SHEET MASTER',
     'Ini akan MENGHAPUS TOTAL sheet "Master_Santri" dan "Master_Halaqah".\n\n' +
@@ -503,35 +755,37 @@ function emergencyResetMasterSheets() {
     'Lanjutkan?',
     ui.ButtonSet.YES_NO
   );
-  
+
   if (resp !== ui.Button.YES) return 'Dibatalkan';
-  
+
   if (ss.getSheetByName('Master_Santri')) ss.deleteSheet(ss.getSheetByName('Master_Santri'));
   if (ss.getSheetByName('Master_Halaqah')) ss.deleteSheet(ss.getSheetByName('Master_Halaqah'));
-  
+
   const msg = '✅ Sheet Master dihapus. Siap jalankan runMigrationOnce.';
   Logger.log(msg);
   return msg;
 }
+
 function fixMasterHeaders() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const s = ss.getSheetByName('Master_Santri');
   const h = ss.getSheetByName('Master_Halaqah');
-  
+
   if (s) {
-    s.getRange(1, 1, 1, 8).setValues([[ 'ID','Nama','Kelas','Halaqah','Foto','Status','Sumber','Catatan' ]]);
+    s.getRange(1, 1, 1, 8).setValues([['ID','Nama','Kelas','Halaqah','Foto','Status','Sumber','Catatan']]);
     s.setFrozenRows(1);
     s.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#e8f3ef');
   }
   if (h) {
-    h.getRange(1, 1, 1, 5).setValues([[ 'ID','Nama','Guru','Status','Sumber' ]]);
+    h.getRange(1, 1, 1, 5).setValues([['ID','Nama','Guru','Status','Sumber']]);
     h.setFrozenRows(1);
     h.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#e8f3ef');
   }
-  
+
   Logger.log('✅ Header diperbaiki');
   return '✅ Header Master_Santri & Master_Halaqah diperbaiki';
 }
+
 function TEST_ALL() {
   Logger.log('=== TES GET MASTER DATA ===');
   try {
@@ -539,129 +793,366 @@ function TEST_ALL() {
     Logger.log('isOk: ' + md.isOk);
     Logger.log('Jumlah santri: ' + (md.santri ? md.santri.length : 'NULL'));
     Logger.log('Jumlah halaqah: ' + (md.halaqah ? md.halaqah.length : 'NULL'));
-    if (md.santri && md.santri.length > 0) {
-      Logger.log('Contoh santri[0]: ' + JSON.stringify(md.santri[0]));
-    }
-    if (md.halaqah && md.halaqah.length > 0) {
-      Logger.log('Contoh halaqah[0]: ' + JSON.stringify(md.halaqah[0]));
-    }
+    if (md.santri && md.santri.length > 0) Logger.log('Contoh santri[0]: ' + JSON.stringify(md.santri[0]));
+    if (md.halaqah && md.halaqah.length > 0) Logger.log('Contoh halaqah[0]: ' + JSON.stringify(md.halaqah[0]));
     if (md.message) Logger.log('Message: ' + md.message);
-  } catch(e) {
+  } catch (e) {
     Logger.log('ERROR getMasterData: ' + e.toString());
   }
-  
+
   Logger.log(' ');
   Logger.log('=== TES GET DATA (Database) ===');
   try {
     const d = getData();
     Logger.log('Jumlah records: ' + (d ? d.length : 'NULL'));
-    if (d && d.length > 0) {
-      Logger.log('Contoh record[0]: ' + JSON.stringify(d[0]));
-    }
-  } catch(e) {
+    if (d && d.length > 0) Logger.log('Contoh record[0]: ' + JSON.stringify(d[0]));
+  } catch (e) {
     Logger.log('ERROR getData: ' + e.toString());
   }
-  
+
   Logger.log(' ');
   Logger.log('=== TES SHEET INFO ===');
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ['Master_Santri', 'Master_Halaqah', 'Database'].forEach(name => {
     const sh = ss.getSheetByName(name);
     if (sh) {
-      Logger.log(`${name}: LastRow=${sh.getLastRow()}, LastCol=${sh.getLastColumn()}`);
+      Logger.log(name + ': LastRow=' + sh.getLastRow() + ', LastCol=' + sh.getLastColumn());
       if (sh.getLastRow() >= 1) {
         const hdr = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
-        Logger.log(`  Header: [${hdr.join(' | ')}]`);
+        Logger.log('  Header: [' + hdr.join(' | ') + ']');
       }
     } else {
-      Logger.log(`${name}: TIDAK ADA`);
+      Logger.log(name + ': TIDAK ADA');
     }
   });
 }
-// ============================================================
-// API ROUTER UNTUK GITHUB PAGES FRONTEND
-// ============================================================
 
-function doPost(e) {
-  try {
-    if (!e || !e.postData || !e.postData.contents) {
-      return jsonResponse({ isError: true, message: 'No payload' });
-    }
-    
-    const req = JSON.parse(e.postData.contents);
-    const action = req.action;
-    const payload = req.payload || {};
-    
-    const result = routeApi(action, payload);
-    return jsonResponse(result);
-  } catch (err) {
-    return jsonResponse({ isError: true, message: err.toString() });
-  }
-}
+function debugSantriNames() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName('Master_Santri');
+  const data = sh.getDataRange().getValues().slice(1).filter(r => r[0]);
 
-// Override doGet lama untuk support API via query string (opsional, untuk testing)
-function doGet(e) {
-  // Jika ada ?action=xxx → jalankan API (untuk testing)
-  if (e && e.parameter && e.parameter.action) {
-    try {
-      const payload = e.parameter.payload ? JSON.parse(e.parameter.payload) : {};
-      const result = routeApi(e.parameter.action, payload);
-      return jsonResponse(result);
-    } catch (err) {
-      return jsonResponse({ isError: true, message: err.toString() });
+  Logger.log('=== MASTER_SANTRI ===');
+  Logger.log('Total baris: ' + data.length);
+
+  const nameMap = {};
+  data.forEach((r, i) => {
+    const key = String(r[1]).trim().toLowerCase();
+    if (!nameMap[key]) nameMap[key] = [];
+    nameMap[key].push({ row: i + 2, id: r[0], nama: r[1], halaqah: r[3], sumber: r[6], status: r[5] });
+  });
+
+  let dupCount = 0;
+  Logger.log(' ');
+  Logger.log('=== DUPLIKAT (nama sama, case-insensitive) ===');
+  Object.keys(nameMap).forEach(key => {
+    if (nameMap[key].length > 1) {
+      dupCount++;
+      Logger.log('⚠️ "' + key + '" (' + nameMap[key].length + 'x):');
+      nameMap[key].forEach(x => Logger.log('   Row ' + x.row + ': "' + x.nama + '" | ' + x.halaqah + ' | sumber=' + x.sumber + ' | status=' + x.status));
     }
-  }
-  
-  // Fallback: serve old GAS-hosted app (kalau Index.html masih ada)
-  try {
-    ensureAllSheets();
-    return HtmlService.createTemplateFromFile('Index')
-      .evaluate()
-      .setTitle('Rekap Hafalan Santri')
-      .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  } catch (err) {
-    return jsonResponse({
-      isOk: true,
-      message: 'Rekap Hafalan API',
-      ts: new Date().toISOString(),
-      hint: 'POST dengan {action, payload} untuk akses API'
+  });
+  if (dupCount === 0) Logger.log('✅ Tidak ada duplikat');
+
+  Logger.log(' ');
+  Logger.log('=== CARI NAMA SPESIFIK ===');
+  ['nawaf', 'rofi', 'maulana'].forEach(term => {
+    Logger.log('--- "' + term + '" ---');
+    data.forEach((r, i) => {
+      if (String(r[1]).toLowerCase().indexOf(term) !== -1) {
+        Logger.log('Row ' + (i + 2) + ': "' + r[1] + '" | ' + r[3] + ' | sumber=' + r[6] + ' | status=' + r[5]);
+      }
     });
-  }
+  });
+
+  Logger.log(' ');
+  Logger.log('=== RECORD PROFIL_SANTRI DI DATABASE ===');
+  const db = ss.getSheetByName('Database');
+  const dbData = db.getDataRange().getValues().slice(1);
+  const profilRecs = dbData.filter(r => String(r[11]) === 'profil_santri');
+  Logger.log('Total profil_santri records: ' + profilRecs.length);
+  profilRecs.slice(0, 20).forEach(r => {
+    Logger.log('"' + r[1] + '" | kelas=' + r[2] + ' | halaqah=' + r[3] + ' | evaluasi="' + r[10] + '"');
+  });
+  if (profilRecs.length > 20) Logger.log('... dan ' + (profilRecs.length - 20) + ' record lainnya');
 }
 
-function routeApi(action, payload) {
-  switch (action) {
-    case 'ping':
-      return { isOk: true, message: 'pong', ts: new Date().toISOString() };
-    case 'getAll': {
-      const md = getMasterData();
-      return {
-        isOk: true,
-        records: getData(),
-        masterSantri: md.santri || [],
-        masterHalaqah: md.halaqah || []
+// ============================================================
+// PERBAIKAN DATA MIGRASI
+// ============================================================
+function previewPerbaikan() {
+  if (typeof SEED_SANTRI === 'undefined' || !SEED_SANTRI || SEED_SANTRI.length === 0) {
+    Logger.log('❌ SEED_SANTRI tidak ditemukan di Code.gs');
+    return;
+  }
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName('Master_Santri');
+  const db = ss.getSheetByName('Database');
+
+  const dbData = db.getDataRange().getValues().slice(1);
+
+  const baseNameMap = {};
+  SEED_SANTRI.forEach((s, idx) => { baseNameMap['base-' + idx] = String(s[0]).trim(); });
+
+  const edits = {};
+  const deletes = new Set();
+  const unknownKeys = new Set();
+
+  dbData.forEach(row => {
+    const tipe = String(row[11] || '');
+    const namaSantri = String(row[1] || '');
+    const kelas = String(row[2] || '');
+    const halaqah = String(row[3] || '');
+    const evaluasi = String(row[10] || '');
+    const tanggal = row[4];
+
+    if (tipe === 'profil_santri' && evaluasi.indexOf('edit:') === 0) {
+      const key = evaluasi.replace('edit:', '').trim();
+      if (key.indexOf('base-') === 0) {
+        const asli = baseNameMap[key];
+        if (asli) {
+          const k = asli.toLowerCase();
+          if (!edits[k] || new Date(tanggal) > new Date(edits[k].tanggal)) {
+            edits[k] = { nama_baru: namaSantri, kelas: kelas, halaqah: halaqah, tanggal: tanggal };
+          }
+        } else {
+          unknownKeys.add(key);
+        }
+      }
+    }
+
+    if (tipe === 'hapus_santri') {
+      const key = evaluasi.trim();
+      if (key.indexOf('base-') === 0) {
+        const asli = baseNameMap[key];
+        if (asli) deletes.add(asli.toLowerCase());
+        else unknownKeys.add(key);
+      } else {
+        deletes.add(key.toLowerCase());
+      }
+    }
+  });
+
+  Logger.log('╔══════════════════════════════════════════════════════════╗');
+  Logger.log('║            PREVIEW PERBAIKAN DATA MIGRASI                ║');
+  Logger.log('╚══════════════════════════════════════════════════════════╝');
+  Logger.log('');
+  Logger.log('📊 Master_Santri saat ini: ' + sh.getDataRange().getValues().slice(1).filter(r => r[0]).length + ' baris');
+  Logger.log('📊 Total profil_santri records: ' + dbData.filter(r => String(r[11]) === 'profil_santri').length);
+  Logger.log('📊 Total hapus_santri records: ' + dbData.filter(r => String(r[11]) === 'hapus_santri').length);
+  Logger.log('');
+  Logger.log('✏️  RENAMES akan diterapkan: ' + Object.keys(edits).length);
+  Logger.log('─────────────────────────────────────────────────────────');
+  let c = 0;
+  Object.keys(edits).forEach(k => {
+    if (c++ < 40) Logger.log('  "' + k + '" → "' + edits[k].nama_baru + '" | ' + edits[k].halaqah + ' | Kls ' + edits[k].kelas);
+  });
+  if (Object.keys(edits).length > 40) Logger.log('  ... dan ' + (Object.keys(edits).length - 40) + ' edit lainnya');
+  Logger.log('');
+
+  Logger.log('🗑️  DEACTIVATIONS akan diterapkan: ' + deletes.size);
+  Logger.log('─────────────────────────────────────────────────────────');
+  deletes.forEach(k => Logger.log('  "' + k + '"'));
+  Logger.log('');
+
+  if (unknownKeys.size > 0) {
+    Logger.log('⚠️  Unknown base keys (tidak match SEED_SANTRI): ' + unknownKeys.size);
+    Logger.log('─────────────────────────────────────────────────────────');
+    let uk = 0;
+    unknownKeys.forEach(k => { if (uk++ < 20) Logger.log('  "' + k + '"'); });
+    if (unknownKeys.size > 20) Logger.log('  ... dan ' + (unknownKeys.size - 20) + ' lainnya');
+    Logger.log('');
+  }
+
+  const freshSData = sh.getDataRange().getValues();
+  const nameGroups = {};
+  freshSData.slice(1).forEach((row, i) => {
+    if (!row[0]) return;
+    const key = String(row[1]).trim().toLowerCase();
+    if (!nameGroups[key]) nameGroups[key] = [];
+    nameGroups[key].push({ rowNum: i + 2, nama: row[1], sumber: String(row[6] || '') });
+  });
+
+  let dupGroups = 0;
+  let dupRows = 0;
+  Object.keys(nameGroups).forEach(key => {
+    if (nameGroups[key].length > 1) {
+      dupGroups++;
+      dupRows += nameGroups[key].length - 1;
+    }
+  });
+
+  Logger.log('🔁 DUPLIKAT ditemukan: ' + dupGroups + ' grup, ' + dupRows + ' baris akan dihapus');
+  Logger.log('─────────────────────────────────────────────────────────');
+  let dc = 0;
+  Object.keys(nameGroups).forEach(key => {
+    if (nameGroups[key].length > 1 && dc++ < 30) {
+      Logger.log('  "' + nameGroups[key][0].nama + '" x' + nameGroups[key].length);
+    }
+  });
+  if (dupGroups > 30) Logger.log('  ... dan ' + (dupGroups - 30) + ' grup lainnya');
+  Logger.log('');
+  Logger.log('╔══════════════════════════════════════════════════════════╗');
+  Logger.log('║  Untuk APPLY: jalankan fungsi applyPerbaikan()           ║');
+  Logger.log('║  ⚠️  Backup dulu sebelum apply!                          ║');
+  Logger.log('╚══════════════════════════════════════════════════════════╝');
+}
+
+function applyPerbaikan() {
+  if (typeof SEED_SANTRI === 'undefined' || !SEED_SANTRI || SEED_SANTRI.length === 0) {
+    Logger.log('❌ SEED_SANTRI tidak ditemukan. Batal.');
+    return;
+  }
+
+  Logger.log('🚀 Memulai apply perbaikan...');
+  const startTime = new Date();
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName('Master_Santri');
+  const db = ss.getSheetByName('Database');
+
+  const dbData = db.getDataRange().getValues().slice(1);
+
+  const baseNameMap = {};
+  SEED_SANTRI.forEach((s, idx) => { baseNameMap['base-' + idx] = String(s[0]).trim(); });
+
+  // 1. RENAMES
+  const edits = {};
+  dbData.forEach(row => {
+    const tipe = String(row[11] || '');
+    const evaluasi = String(row[10] || '');
+    const tanggal = row[4];
+    if (tipe !== 'profil_santri' || evaluasi.indexOf('edit:') !== 0) return;
+    const key = evaluasi.replace('edit:', '').trim();
+    if (key.indexOf('base-') !== 0) return;
+    const asli = baseNameMap[key];
+    if (!asli) return;
+    const k = asli.toLowerCase();
+    if (!edits[k] || new Date(tanggal) > new Date(edits[k].tanggal)) {
+      edits[k] = {
+        nama_baru: String(row[1] || ''),
+        kelas: String(row[2] || ''),
+        halaqah: String(row[3] || ''),
+        tanggal: tanggal
       };
     }
-    case 'getData': return getData();
-    case 'getMasterData': return getMasterData();
-    case 'createRecord': return createRecord(payload);
-    case 'updateRecord': return updateRecord(payload);
-    case 'deleteRecord': return deleteRecord(payload);
-    case 'processBulkAttendance': return processBulkAttendance(payload);
-    case 'createSantri': return createSantri(payload);
-    case 'updateSantri': return updateSantri(payload);
-    case 'deleteSantri': return deleteSantri(payload);
-    case 'createHalaqah': return createHalaqah(payload);
-    case 'updateHalaqah': return updateHalaqah(payload);
-    case 'deleteHalaqah': return deleteHalaqah(payload);
-    default:
-      return { isError: true, message: 'Unknown action: ' + action };
-  }
-}
+  });
 
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+  let renamedCount = 0;
+  let sData = sh.getDataRange().getValues();
+  for (let i = 1; i < sData.length; i++) {
+    if (!sData[i][0]) continue;
+    const nama = String(sData[i][1]).trim();
+    const key = nama.toLowerCase();
+    if (edits[key]) {
+      const e = edits[key];
+      sh.getRange(i + 1, 2).setValue(e.nama_baru);
+      sh.getRange(i + 1, 3).setValue(e.kelas);
+      sh.getRange(i + 1, 4).setValue(e.halaqah);
+      Logger.log('✏️  Renamed: "' + nama + '" → "' + e.nama_baru + '"');
+      renamedCount++;
+    }
+  }
+  Logger.log('✅ ' + renamedCount + ' santri di-rename');
+
+  // 2. DELETES
+  const deletes = new Set();
+  dbData.forEach(row => {
+    const tipe = String(row[11] || '');
+    if (tipe !== 'hapus_santri') return;
+    const key = String(row[10] || '').trim();
+    if (key.indexOf('base-') === 0) {
+      const asli = baseNameMap[key];
+      if (asli) deletes.add(asli.toLowerCase());
+    } else if (key) {
+      deletes.add(key.toLowerCase());
+    }
+  });
+
+  let deactCount = 0;
+  sData = sh.getDataRange().getValues();
+  for (let i = 1; i < sData.length; i++) {
+    if (!sData[i][0]) continue;
+    const nama = String(sData[i][1]).trim();
+    if (deletes.has(nama.toLowerCase()) && sData[i][5] !== 'Nonaktif') {
+      sh.getRange(i + 1, 6).setValue('Nonaktif');
+      Logger.log('🗑️  Deactivated: "' + nama + '"');
+      deactCount++;
+    }
+  }
+  Logger.log('✅ ' + deactCount + ' santri dinonaktifkan');
+
+  // 3. CLEANUP DUPLIKAT
+  const sData2 = sh.getDataRange().getValues();
+  const nameGroups = {};
+  sData2.slice(1).forEach((row, i) => {
+    if (!row[0]) return;
+    const key = String(row[1]).trim().toLowerCase();
+    if (!nameGroups[key]) nameGroups[key] = [];
+    nameGroups[key].push({
+      rowNum: i + 2, nama: row[1], sumber: String(row[6] || ''),
+      status: String(row[5] || ''), id: String(row[0])
+    });
+  });
+
+  const rowsToDelete = [];
+  Object.keys(nameGroups).forEach(key => {
+    const group = nameGroups[key];
+    if (group.length <= 1) return;
+
+    const baseEntries = group.filter(x => x.sumber === 'base');
+    const aktifBase = baseEntries.filter(x => x.status === 'Aktif');
+
+    if (aktifBase.length > 0) {
+      let kept = false;
+      group.forEach(x => {
+        if (!kept && x.id === aktifBase[0].id) { kept = true; return; }
+        rowsToDelete.push(x);
+      });
+    } else if (baseEntries.length > 0) {
+      let kept = false;
+      group.forEach(x => {
+        if (!kept && x.id === baseEntries[0].id) { kept = true; return; }
+        rowsToDelete.push(x);
+      });
+    } else {
+      group.slice(1).forEach(x => rowsToDelete.push(x));
+    }
+  });
+
+  rowsToDelete.sort((a, b) => b.rowNum - a.rowNum);
+  rowsToDelete.forEach(x => {
+    Logger.log('🔁 Delete dup: "' + x.nama + '" (row ' + x.rowNum + ', sumber=' + x.sumber + ')');
+    sh.deleteRow(x.rowNum);
+  });
+  Logger.log('✅ ' + rowsToDelete.length + ' baris duplikat dihapus');
+
+  // 4. REPORT
+  const finalCount = sh.getDataRange().getValues().slice(1).filter(r => r[0]).length;
+  const aktifCount = sh.getDataRange().getValues().slice(1).filter(r => r[0] && r[5] === 'Aktif').length;
+  const dur = ((new Date() - startTime) / 1000).toFixed(2);
+
+  Logger.log('');
+  Logger.log('╔══════════════════════════════════════════════════════════╗');
+  Logger.log('║                    SELESAI                               ║');
+  Logger.log('╚══════════════════════════════════════════════════════════╝');
+  Logger.log('  Renames:        ' + renamedCount);
+  Logger.log('  Deactivated:    ' + deactCount);
+  Logger.log('  Duplikat hapus: ' + rowsToDelete.length);
+  Logger.log('  Total baris:    ' + finalCount);
+  Logger.log('  Aktif:          ' + aktifCount);
+  Logger.log('  Nonaktif:       ' + (finalCount - aktifCount));
+  Logger.log('  Waktu:          ' + dur + 's');
+  Logger.log('');
+  Logger.log('✅ Fix selesai. Refresh aplikasi web untuk lihat hasilnya.');
+}
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeaders({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
 }
