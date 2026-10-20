@@ -39,6 +39,7 @@ async function gasCall(action, payload = {}, options = {}) {
     const res = await fetch(window.APP_CONFIG.gasUrl, {
       method: 'POST',
       body: formData,
+      mode: 'no-cors',
       signal: controller.signal,
     });
 
