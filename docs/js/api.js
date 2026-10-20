@@ -5,7 +5,7 @@
 
 // Pastikan URL ini sesuai dengan URL GAS Anda (yang diakhiri /exec)
 window.APP_CONFIG = window.APP_CONFIG || {
-  gasUrl: 'https://script.google.com/macros/s/AKfycbzd0nAN62cpSg2HAhVtrbKQEQYZ_-TXRl9ABTQTnqo1Rhs3FEVaciMLvikUdnKV0l_dLg/exec'
+  gasUrl: 'https://rekap-hafalan-proxy.dhanmars-jacka33.workers.dev'
 };
 
 let _inflightGetAll = null;
