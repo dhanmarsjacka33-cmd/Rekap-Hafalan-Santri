@@ -5,7 +5,7 @@
 
 // --- Konfigurasi URL GAS (Pastikan URL ini sesuai dengan Deploy GAS Anda) ---
 window.APP_CONFIG = window.APP_CONFIG || {
-  gasUrl: 'https://script.google.com/macros/s/TEMPEL_URL_DEPLOY_ANDA_DI_SINI/exec'
+  gasUrl: 'https://script.google.com/macros/s/AKfycbzd0nAN62cpSg2HAhVtrbKQEQYZ_-TXRl9ABTQTnqo1Rhs3FEVaciMLvikUdnKV0l_dLg/exec'
 };
 
 // ---------- State internal ----------
