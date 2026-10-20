@@ -1,14 +1,6 @@
-// Tambahkan ini di baris paling atas app.js
-// Gunakan variabel dari api.js
-window.records = window.records || [];
-window.masterSantri = window.masterSantri || [];
-window.masterHalaqah = window.masterHalaqah || [];
-
-// ... (kode di bawahnya tetap sama)
 // ============================================================
-// GLOBAL STATE
+// GLOBAL STATE (Diselaraskan dengan api.js)
 // ============================================================
-
 let selectedStudent = null;
 let modalState = null;
 let attendanceChart = null;
@@ -19,6 +11,11 @@ let cropper = null;
 let fullCalendarInstance = null;
 let activeLeaderboardTab = "quran";
 let currentLeaderboardData = [];
+
+// Variabel ini akan diisi oleh dataSdk.init()
+let records = [];
+let masterSantri = [];
+let masterHalaqah = [];
 
 // ============================================================
 // UTILITIES
@@ -86,31 +83,22 @@ const clearSelect = (sel, txt) => {
   if (!sel) return; sel.innerHTML = ""; option(sel, "", txt);
 };
 
-// Halaqah yang dikecualikan dari Most Wanted (kelas tahsin)
 const EXCLUDED_TAHSIN_HALAQAH = ["Halaqah 3","Halaqah 4","Halaqah 5","Halaqah 7","Halaqah 8","Halaqah 11","Halaqah 12","Halaqah 15","Halaqah 16"];
 
 // ============================================================
-// DATA ACCESS LAYER (sumber: MASTER SHEETS)
+// DATA ACCESS LAYER
 // ============================================================
 function studentList() {
-  return masterSantri
-    .filter(s => s.status === 'Aktif')
-    .sort((a, b) => a.nama.localeCompare(b.nama, "id"));
+  return masterSantri.filter(s => s.status === 'Aktif').sort((a, b) => a.nama.localeCompare(b.nama, "id"));
 }
 
 function halaqahList() {
-  return masterHalaqah
-    .filter(h => h.status === 'Aktif')
-    .sort((a, b) => a.nama.localeCompare(b.nama, "id", {numeric: true}));
+  return masterHalaqah.filter(h => h.status === 'Aktif').sort((a, b) => a.nama.localeCompare(b.nama, "id", {numeric: true}));
 }
 
 function getHalaqahName(s) {
   return s.halaqah || '';
 }
-
-// ============================================================
-// SDK - GAS COMMUNICATION
-// ============================================================
 
 // ============================================================
 // NAVIGATION
@@ -374,7 +362,7 @@ function setupTipeSetoranToggle() {
   byId("f-iqra").addEventListener("change", populateIqraHalaman);
 }
 
-function openSetoran(student) {
+window.openSetoran = function(student) {
   selectedStudent = student;
   byId("selected-student").textContent = student.nama;
   byId("selected-meta").textContent = `${getHalaqahName(student)} · Kelas ${student.kelas}`;
@@ -384,7 +372,13 @@ function openSetoran(student) {
   const sel = byId("f-tipe-setoran");
   if (sel) { sel.value = "Al-Quran"; sel.dispatchEvent(new Event("change")); }
   byId("setoran-panel").scrollIntoView({behavior: "smooth", block: "start"});
-}
+  
+  // FITUR RIWAYAT (dari fitur-baru.js)
+  if (typeof window.renderPanelRiwayat === 'function') {
+    window.renderPanelRiwayat(student.nama);
+  }
+};
+
 function openUjian(student) {
   selectedStudent = student;
   byId("ujian-selected-student").textContent = student.nama;
@@ -872,6 +866,9 @@ function render() {
   if (window.lucide) lucide.createIcons();
 }
 
+// Ekspos fungsi render ke window agar bisa dipanggil dari api.js
+window.render = render;
+
 // ============================================================
 // PROFILE MODAL
 // ============================================================
@@ -1186,12 +1183,10 @@ byId("mutasi-form").addEventListener("submit", async e => {
   }
   const targetHalaqah = byId("mutasi-tujuan-halaqah").value;
   const targetGuru = byId("mutasi-tujuan-guru").value;
-  // 1. Update halaqah santri
   const updRes = await window.dataSdk.updateSantri({
     id: student.id, nama: student.nama, kelas: student.kelas,
     halaqah: targetHalaqah, foto: student.foto, status: 'Aktif'
   });
-  // 2. Catat log mutasi
   await window.dataSdk.create({
     nama_santri: student.nama, kelas: student.kelas,
     halaqah: student.halaqah, evaluasi: targetGuru,
@@ -1486,17 +1481,19 @@ function init() {
   populateJuz();
   populateBaris();
   setupTipeSetoranToggle();
-  populateAllFilters();
+  
+  // Inisialisasi SDK dengan callback yang benar
   window.dataSdk.init({ 
-  onDataChanged(data) { 
-    // Paksa app.js mengambil data dari api.js
-    if (window.records) records = window.records;
-    if (window.masterSantri) masterSantri = window.masterSantri;
-    if (window.masterHalaqah) masterHalaqah = window.masterHalaqah;
-    
-    render(); 
-  } 
-});
+    onDataChanged(data) { 
+      // Sinkronkan data dari api.js ke variabel lokal app.js
+      if (window.records) records = window.records;
+      if (window.masterSantri) masterSantri = window.masterSantri;
+      if (window.masterHalaqah) masterHalaqah = window.masterHalaqah;
+      
+      // Render UI
+      render(); 
+    } 
+  });
 }
 
 window.addEventListener("DOMContentLoaded", init);
