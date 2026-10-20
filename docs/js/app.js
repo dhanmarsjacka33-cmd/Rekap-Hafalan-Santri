@@ -3,7 +3,7 @@ let records = [];
 let masterSantri = [];
 let masterHalaqah = [];
 
-let selectedStudent = null;
+
 // ... (kode di bawahnya tetap sama)
 // ============================================================
 // GLOBAL STATE

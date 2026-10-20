@@ -1,11 +1,9 @@
 // ============================================================
-// API LAYER — Komunikasi dengan Google Apps Script
-// Versi 3.0 (Anti-CORS & Lengkap)
+// API LAYER — Versi 4.0 (Metode GET, Anti-CORS, Tanpa Redirect)
 // ============================================================
 
-// Pastikan URL ini sesuai dengan URL GAS Anda (yang diakhiri /exec)
 window.APP_CONFIG = window.APP_CONFIG || {
-  gasUrl: 'https://rekap-hafalan-proxy.dhanmars-jacka33.workers.dev'
+  gasUrl: 'https://rekap-hafalan-proxy.dhanmars-jacka33.workers.dev' // Biarkan pakai Worker, atau ganti ke URL GAS langsung
 };
 
 let _inflightGetAll = null;
@@ -16,7 +14,6 @@ const GAS_DEFAULTS = {
   retries: 1,
 };
 
-// ---------- Core: panggil GAS ----------
 async function gasCall(action, payload = {}, options = {}) {
   const timeoutMs = options.timeout ?? GAS_DEFAULTS.timeout;
   const retriesLeft = options.retries ?? GAS_DEFAULTS.retries;
@@ -27,14 +24,13 @@ async function gasCall(action, payload = {}, options = {}) {
   try {
     if (window.DEBUG) console.log('[gasCall] →', action, payload);
 
-    // 🛠️ TRIK CORS: Kirim sebagai text/plain agar tidak memicu preflight (OPTIONS)
-    const res = await fetch(window.APP_CONFIG.gasUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8', 
-      },
-      // Kirim data dalam format JSON string
-      body: JSON.stringify({ action, payload }), 
+    // 🛠️ MENGGUNAKAN GET REQUEST UNTUK MENGHINDARI REDIRECT GAS
+    const url = new URL(window.APP_CONFIG.gasUrl);
+    url.searchParams.set('action', action);
+    url.searchParams.set('payload', JSON.stringify(payload));
+
+    const res = await fetch(url.toString(), {
+      method: 'GET', 
       signal: controller.signal,
     });
 
@@ -45,6 +41,7 @@ async function gasCall(action, payload = {}, options = {}) {
     try {
       json = JSON.parse(text);
     } catch (_) {
+      // Jika GAS mengembalikan HTML, kita coba ekstrak JSON di dalamnya
       const match = text.match(/\{[\s\S]*\}/);
       if (!match) throw new Error('Response bukan JSON: ' + text.substring(0, 200));
       json = JSON.parse(match[0]);
@@ -66,7 +63,9 @@ async function gasCall(action, payload = {}, options = {}) {
   }
 }
 
-// ---------- Dedupe & Coalesce ----------
+// (Bagian bawah api.js — fetchAll, refreshData, dataSdk — TETAP SAMA SEPERTI SEBELUMNYA)
+// ...
+
 function fetchAll({ force = false } = {}) {
   if (!force && _inflightGetAll) return _inflightGetAll;
   _inflightGetAll = gasCall('getAll', {}, { timeout: GAS_DEFAULTS.timeout })
@@ -111,9 +110,6 @@ function _opts(a) {
   return { skipRefresh: false, optimistic: false, ...(a || {}) };
 }
 
-// ============================================================
-// SDK PUBLIK
-// ============================================================
 window.dataSdk = {
   init: async function (handler) {
     try {
@@ -122,13 +118,8 @@ window.dataSdk = {
         window.records = data.records || [];
         window.masterSantri = data.masterSantri || [];
         window.masterHalaqah = data.masterHalaqah || [];
-        
-        // Paksa UI untuk render setelah data masuk
         if (typeof window.render === 'function') window.render();
-
-        if (handler && typeof handler.onDataChanged === 'function') {
-          handler.onDataChanged(window.records);
-        }
+        if (handler && typeof handler.onDataChanged === 'function') handler.onDataChanged(window.records);
       }
       return { isOk: true };
     } catch (e) {
@@ -136,7 +127,6 @@ window.dataSdk = {
       return { isOk: false, message: e.message };
     }
   },
-
   create: async (row, o) => {
     const { skipRefresh, optimistic } = _opts(o);
     if (optimistic) _applyLocalCreate(row);
@@ -144,7 +134,6 @@ window.dataSdk = {
     if (r.isOk && !skipRefresh) refreshData();
     return r;
   },
-
   update: async (row, o) => {
     const { skipRefresh, optimistic } = _opts(o);
     if (optimistic) _applyLocalUpdate(row);
@@ -152,7 +141,6 @@ window.dataSdk = {
     if (r.isOk && !skipRefresh) refreshData();
     return r;
   },
-
   delete: async (row, o) => {
     const { skipRefresh, optimistic } = _opts(o);
     if (optimistic) _applyLocalDelete(row);
@@ -160,22 +148,18 @@ window.dataSdk = {
     if (r.isOk && !skipRefresh) refreshData();
     return r;
   },
-
   bulkAttendance: async (rows, o) => {
     const { skipRefresh } = _opts(o);
     const r = await gasCall('processBulkAttendance', rows, { timeout: 60000 });
     if (r.isOk && !skipRefresh) refreshData();
     return r;
   },
-
   createSantri: async (d) => { const r = await gasCall('createSantri', d); if (r.isOk) refreshData(); return r; },
   updateSantri: async (d) => { const r = await gasCall('updateSantri', d); if (r.isOk) refreshData(); return r; },
   deleteSantri: async (d) => { const r = await gasCall('deleteSantri', d); if (r.isOk) refreshData(); return r; },
-
   createHalaqah: async (d) => { const r = await gasCall('createHalaqah', d); if (r.isOk) refreshData(); return r; },
   updateHalaqah: async (d) => { const r = await gasCall('updateHalaqah', d); if (r.isOk) refreshData(); return r; },
   deleteHalaqah: async (d) => { const r = await gasCall('deleteHalaqah', d); if (r.isOk) refreshData(); return r; },
-
   mutateSantriBulk: async (items, o) => {
     const { skipRefresh } = _opts(o);
     try {
@@ -192,7 +176,6 @@ window.dataSdk = {
       return { isOk: results.every(x => x.ok), results };
     }
   },
-
   refresh: (opts) => refreshData(opts),
   fetchAll,
 };
