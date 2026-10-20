@@ -1487,7 +1487,16 @@ function init() {
   populateBaris();
   setupTipeSetoranToggle();
   populateAllFilters();
-  window.dataSdk.init({ onDataChanged(data) { records = data || []; render(); } });
+  window.dataSdk.init({ 
+  onDataChanged(data) { 
+    // Paksa app.js mengambil data dari api.js
+    if (window.records) records = window.records;
+    if (window.masterSantri) masterSantri = window.masterSantri;
+    if (window.masterHalaqah) masterHalaqah = window.masterHalaqah;
+    
+    render(); 
+  } 
+});
 }
 
 window.addEventListener("DOMContentLoaded", init);
