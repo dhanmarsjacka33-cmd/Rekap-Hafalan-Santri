@@ -1,5 +1,6 @@
 let filterMode = 'semua';
 let searchQuery = '';
+let isFastMode = true; // Default ke mode cepat untuk HP
 
 function renderInputCepat() {
   const container = document.getElementById('list-input-cepat');
@@ -10,8 +11,8 @@ function renderInputCepat() {
     const key = s.nama.toLowerCase();
     if (searchQuery && !key.includes(searchQuery)) return false;
     
-    const hasSetoran = records.some(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran" && dateKey(r.tanggal) === targetDate);
-    const hasAbsen = records.find(r => r.nama_santri === s.nama && r.tipe === "kehadiran" && dateKey(r.tanggal) === targetDate);
+    const hasSetoran = window.records.some(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran" && dateKey(r.tanggal) === targetDate);
+    const hasAbsen = window.records.find(r => r.nama_santri === s.nama && r.tipe === "kehadiran" && dateKey(r.tanggal) === targetDate);
     const isAlfa = hasAbsen && hasAbsen.kehadiran === 'Alfa';
 
     if (filterMode === 'belum') return !hasSetoran && !isAlfa;
@@ -36,8 +37,8 @@ function renderInputCepat() {
   }
 
   displayStudents.forEach((s, index) => {
-    const hasSetoran = records.some(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran" && dateKey(r.tanggal) === targetDate);
-    const lastSetoran = records.filter(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal))[0];
+    const hasSetoran = window.records.some(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran" && dateKey(r.tanggal) === targetDate);
+    const lastSetoran = window.records.filter(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal))[0];
 
     const card = document.createElement('div');
     card.className = `roster-card bg-white border border-stone-200 rounded-xl p-3 shadow-sm ${hasSetoran ? 'sudah-setor' : ''}`;
@@ -115,7 +116,7 @@ function renderInputCepat() {
           card.querySelector('.check-icon').classList.remove('hidden');
           btn.innerHTML = 'Tersimpan ✓';
           
-          records.push({ ...payload, __backendId: res.id, tanggal: getIsoForDate(targetDate) });
+          window.records.push({ ...payload, __backendId: res.id, tanggal: getIsoForDate(targetDate) });
           showToast("Setoran tersimpan!");
 
           setTimeout(() => {
@@ -142,7 +143,39 @@ function renderInputCepat() {
   if (window.lucide) lucide.createIcons();
 }
 
+function toggleMode(mode) {
+  const rosterContainer = document.getElementById('roster-mode-container');
+  const fastContainer = document.getElementById('fast-mode-container');
+  const btnRoster = document.getElementById('mode-roster-btn');
+  const btnCepat = document.getElementById('mode-cepat-btn');
+
+  if (!rosterContainer || !fastContainer) return;
+
+  if (mode === 'roster') {
+    isFastMode = false;
+    rosterContainer.classList.remove('hidden');
+    fastContainer.classList.add('hidden');
+    btnRoster.className = "btn-primary px-4 py-2 text-sm flex items-center gap-2";
+    btnCepat.className = "btn-secondary px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white";
+    renderRoster(); // Panggil fungsi render tabel
+  } else {
+    isFastMode = true;
+    rosterContainer.classList.add('hidden');
+    fastContainer.classList.remove('hidden');
+    btnRoster.className = "btn-secondary px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white";
+    btnCepat.className = "btn-primary px-4 py-2 text-sm flex items-center gap-2";
+    renderInputCepat();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Cek layar (default: Cepat untuk HP, Roster untuk Desktop)
+  const isMobile = window.innerWidth < 768;
+  toggleMode(isMobile ? 'cepat' : 'roster');
+
+  if (document.getElementById('mode-roster-btn')) document.getElementById('mode-roster-btn').addEventListener('click', () => toggleMode('roster'));
+  if (document.getElementById('mode-cepat-btn')) document.getElementById('mode-cepat-btn').addEventListener('click', () => toggleMode('cepat'));
+
   const searchInput = document.getElementById('search-input-cepat');
   if (searchInput) searchInput.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderInputCepat(); });
 
@@ -164,12 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const navInput = document.getElementById('nav-input');
-  if (navInput) navInput.addEventListener('click', () => {
-    setTimeout(() => { if (searchInput) searchInput.focus(); if (typeof renderInputCepat === 'function') renderInputCepat(); }, 200);
-  });
-
+  // Patch render utama
   const originalRender = window.render;
-  if (originalRender) window.render = function() { originalRender(); renderInputCepat(); };
-  setTimeout(renderInputCepat, 500);
+  window.render = function() { originalRender(); if (isFastMode) renderInputCepat(); else renderRoster(); };
 });
