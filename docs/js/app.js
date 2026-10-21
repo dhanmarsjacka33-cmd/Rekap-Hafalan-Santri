@@ -1,3 +1,23 @@
+// === LAZY LOADER UNTUK IPHONE ===
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+async function ensureChartLoaded() {
+  if (typeof Chart === 'undefined') await loadScript('https://cdn.jsdelivr.net/npm/chart.js');
+}
+async function ensureCalendarLoaded() {
+  if (typeof FullCalendar === 'undefined') {
+    await loadScript('https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js');
+  }
+}
 // ============================================================
 // GLOBAL STATE (Diselaraskan dengan api.js)
 // ============================================================
@@ -404,7 +424,8 @@ const isDuplicate = row => activityRecords().some(r =>
 // ============================================================
 // CHARTS
 // ============================================================
-function renderCharts(hadir, sakit, izin, alfa, lancar, perbaikan, diulang, dataUjian) {
+async function renderCharts(hadir, sakit, izin, alfa, lancar, perbaikan, diulang, dataUjian) {
+  await ensureChartLoaded();
   if (typeof Chart === 'undefined') return;
   const ctxAtt = byId('attendanceChart');
   if (attendanceChart) attendanceChart.destroy();
@@ -829,7 +850,8 @@ function renderRekapUjianGlobal() {
 // ============================================================
 // CALENDAR
 // ============================================================
-function initCalendar() {
+async function initCalendar() {
+  await ensureCalendarLoaded();
   if (typeof FullCalendar === 'undefined') return;
   const calendarEl = byId('agenda-calendar-container');
   if (!calendarEl) return;
