@@ -683,6 +683,23 @@
               <i data-lucide="user-plus" style="width:17px;height:17px"></i> Tambah Santri Baru
             </button>
           </div>
+          
+          <!-- FILTER MANAJEMEN SANTRI -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <div>
+              <label class="block text-xs font-semibold mb-1">Cari Nama</label>
+              <input type="text" id="admin-search-student" class="field-input text-sm" placeholder="Cari santri...">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Halaqah</label>
+              <select id="admin-filter-halaqah" class="field-input filter-select text-sm"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Kelas</label>
+              <select id="admin-filter-kelas" class="field-input filter-select text-sm"></select>
+            </div>
+          </div>
+
           <div class="overflow-x-auto rounded-xl border border-[#e4dccb]">
             <table class="w-full min-w-[640px] text-sm text-left">
               <thead class="bg-[#f3eee2] text-[#4a4436]">
@@ -701,9 +718,14 @@
 
         <!-- Manajemen Kelas -->
         <section class="canva-card rounded-2xl p-5 shadow-sm">
-          <div class="mb-5">
-            <h2 class="text-xl font-bold">Manajemen Kelas</h2>
-            <p class="text-stone-500 text-sm mt-1">Daftar kelas aktif beserta jumlah santri saat ini.</p>
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-xl font-bold">Manajemen Kelas</h2>
+              <p class="text-stone-500 text-sm mt-1">Daftar kelas aktif beserta jumlah santri saat ini.</p>
+            </div>
+            <button id="add-kelas-admin" type="button" class="canva-button rounded-lg px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center">
+              <i data-lucide="plus" style="width:17px;height:17px"></i> Tambah Kelas
+            </button>
           </div>
           <div id="admin-class-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
         </section>
@@ -854,6 +876,22 @@
       <div><label class="block text-sm font-semibold mb-1">Pengampu Tujuan</label><input id="mutasi-tujuan-guru" type="text" class="field-input field-read" readonly></div>
       <p id="mutasi-error" class="hidden text-sm text-red-700 rounded-lg bg-red-50 px-3 py-2"></p>
       <button id="mutasi-submit" type="submit" class="canva-button w-full rounded-lg py-3 font-semibold mt-2">Simpan Mutasi</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Kelas -->
+<div id="kelas-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
+  <div class="canva-card relative w-full max-w-sm mx-auto rounded-2xl p-6 shadow-2xl modal-content">
+    <div class="flex items-start justify-between gap-3 mb-5">
+      <div><p class="text-xs uppercase tracking-[.14em] font-bold text-emerald-600">DATA KELAS</p><h2 id="kelas-modal-title" class="text-xl font-semibold mt-1">Tambah Kelas</h2></div>
+      <button id="close-kelas-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    </div>
+    <form id="kelas-form" class="space-y-4">
+      <input type="hidden" id="kelas-old-name">
+      <div><label class="block text-sm font-semibold mb-1">Nama Kelas</label><input id="kelas-name" type="text" class="field-input" placeholder="Misal: 7.1" required></div>
+      <p id="kelas-error" class="hidden text-sm text-red-700 rounded-lg bg-red-50 px-3 py-2"></p>
+      <button id="kelas-submit" type="submit" class="canva-button w-full rounded-lg py-3 font-semibold mt-2">Simpan</button>
     </form>
   </div>
 </div>

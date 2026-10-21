@@ -44,6 +44,7 @@ window.dataSdk = {
         window.records = data.records || [];
         window.masterSantri = data.masterSantri || [];
         window.masterHalaqah = data.masterHalaqah || [];
+        window.masterKelas = data.masterKelas || [];
         handler.onDataChanged(window.records);
       }
       return { isOk: true };
@@ -61,7 +62,10 @@ window.dataSdk = {
   deleteSantri: (d) => gasCall('deleteSantri', d).then(r => { if (r.isOk) refreshData(); return r; }),
   createHalaqah: (d) => gasCall('createHalaqah', d).then(r => { if (r.isOk) refreshData(); return r; }),
   updateHalaqah: (d) => gasCall('updateHalaqah', d).then(r => { if (r.isOk) refreshData(); return r; }),
-  deleteHalaqah: (d) => gasCall('deleteHalaqah', d).then(r => { if (r.isOk) refreshData(); return r; })
+  deleteHalaqah: (d) => gasCall('deleteHalaqah', d).then(r => { if (r.isOk) refreshData(); return r; }),
+  createKelas: (d) => gasCall('createKelas', d).then(r => { if (r.isOk) refreshData(); return r; }),
+  updateKelas: (d) => gasCall('updateKelas', d).then(r => { if (r.isOk) refreshData(); return r; }),
+  deleteKelas: (d) => gasCall('deleteKelas', d).then(r => { if (r.isOk) refreshData(); return r; })
 };
 
 async function refreshData() {
@@ -71,6 +75,7 @@ async function refreshData() {
       window.records = data.records || [];
       window.masterSantri = data.masterSantri || [];
       window.masterHalaqah = data.masterHalaqah || [];
+      window.masterKelas = data.masterKelas || [];
       if (typeof render === 'function') render();
     }
   } catch (e) {

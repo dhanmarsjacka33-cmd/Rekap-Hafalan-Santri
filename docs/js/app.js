@@ -30,6 +30,7 @@ const EXCLUDED_TAHSIN_HALAQAH = ["Halaqah 3","Halaqah 4","Halaqah 5","Halaqah 7"
 
 function studentList() { if (!window.masterSantri) return []; return window.masterSantri.filter(s => s.status === 'Aktif').sort((a, b) => a.nama.localeCompare(b.nama, "id")); }
 function halaqahList() { if (!window.masterHalaqah) return []; return window.masterHalaqah.filter(h => h.status === 'Aktif').sort((a, b) => a.nama.localeCompare(b.nama, "id", {numeric: true})); }
+function kelasList() { if (!window.masterKelas) return []; return window.masterKelas.sort((a, b) => a.nama.localeCompare(b.nama, "id", {numeric: true})); }
 function getHalaqahName(s) { return s.halaqah || ''; }
 
 // Navigation
@@ -100,6 +101,7 @@ function switchRaporTab(tab) {
     }
   });
   if (tab === 'lap-3') {
+      populateAdminFilters();
       renderAdminStudents();
       renderAdminClasses();
   }
@@ -174,19 +176,16 @@ const isDuplicate = row => activityRecords().some(r => r.tipe === row.tipe && r.
 // CHARTS & STATS
 async function renderCharts(hadir, sakit, izin, alfa, lancar, perbaikan, diulang, dataUjian) {
   await ensureChartLoaded(); if (typeof Chart === 'undefined') return;
-  
   const ctxAtt = byId('attendanceChart'); 
   if (ctxAtt) {
     if (attendanceChart) attendanceChart.destroy();
     attendanceChart = new Chart(ctxAtt, { type: 'doughnut', data: { labels: ['Hadir','Sakit','Izin','Alfa'], datasets: [{ data: [hadir, sakit, izin, alfa], backgroundColor: ['#20744e','#d97706','#eab308','#a24c38'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 12, font: {size: 10}} } }, cutout: '70%' } });
   }
-  
   const ctxSet = byId('setoranChart'); 
   if (ctxSet) {
     if (setoranChart) setoranChart.destroy();
     setoranChart = new Chart(ctxSet, { type: 'bar', data: { labels: ['Lancar','Perbaikan','Diulang'], datasets: [{ label: 'Jumlah', data: [lancar, perbaikan, diulang], backgroundColor: ['#1f6f54','#f59e0b','#ef4444'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x:{grid:{display:false}}, y:{beginAtZero:true, ticks:{stepSize:1}} } } });
   }
-
   const ctxUjian = byId('ujianChart'); 
   if (ctxUjian) {
     if (ujianChart) ujianChart.destroy();
@@ -254,10 +253,44 @@ function renderRekapBulanan() {
 }
 function renderRekapUjianGlobal() { const h = byId("rekap-ujian-halaqah").value, k = byId("rekap-ujian-kelas").value; const allUjian = (window.records || []).filter(r => r.tipe === "ujian_semester"); const filtered = allUjian.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); const list = byId("rekap-ujian-list"); list.innerHTML = ""; byId("rekap-ujian-empty").classList.toggle("hidden", filtered.length > 0); filtered.forEach((u, i) => { const tr = document.createElement("tr"); tr.className = "border-b border-amber-200/50 hover:bg-amber-50/20"; let predClass = "text-indigo-700 bg-indigo-50"; if (u.status === "Roosib" || u.status === "Maqbuul") predClass = "text-rose-700 bg-rose-50"; else if (u.status.includes("Jayyid")) predClass = "text-emerald-700 bg-emerald-50"; const parts = (u.evaluasi || "").split("| Fashahah:"); const fash = parts.length > 1 ? parts[1].trim() : "-"; tr.innerHTML = ` <td class="text-center px-3 py-2 border-r border-amber-200/50 text-stone-500">${i+1}</td> <td class="px-4 py-2 border-r border-amber-200/50 font-semibold">${esc(u.nama_santri)}</td> <td class="text-center px-3 py-2 border-r border-amber-200/50 text-xs">${esc(u.kelas)}</td> <td class="text-center px-4 py-2 border-r border-amber-200/50 font-bold text-[#1f6f54] text-xs">${esc(u.surah)}</td> <td class="text-center px-3 py-2 border-r border-amber-200/50 text-xs text-stone-500">${new Date(u.tanggal).toLocaleDateString("id-ID", {day: "2-digit", month: "short"})}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-bold">${esc(u.juz)}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-bold">${esc(u.jumlah_baris)}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-bold">${esc(fash)}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-black text-lg">${esc(u.ayat)}</td> <td class="text-center px-4 py-2"><span class="px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${predClass}">${esc(u.status)}</span></td>`; list.appendChild(tr); }); }
 
+function populateAdminFilters() {
+    const selH = byId("admin-filter-halaqah");
+    const selK = byId("admin-filter-kelas");
+    if (!selH || !selK) return;
+
+    const curH = selH.value;
+    const curK = selK.value;
+
+    clearSelect(selH, "Semua Halaqah");
+    halaqahList().forEach(h => option(selH, h.nama, h.nama));
+    if ([...selH.options].some(o => o.value === curH)) selH.value = curH;
+
+    clearSelect(selK, "Semua Kelas");
+    let classes = [];
+    if (window.masterKelas && window.masterKelas.length > 0) {
+        classes = window.masterKelas.map(k => k.nama);
+    } else {
+        classes = [...new Set(studentList().map(s => s.kelas).filter(Boolean))];
+    }
+    classes.sort((a,b) => a.localeCompare(b, "id", {numeric: true})).forEach(c => option(selK, c, c));
+    if ([...selK.options].some(o => o.value === curK)) selK.value = curK;
+}
+
 function renderAdminStudents() {
     const list = byId("admin-student-list");
     if (!list) return;
-    list.innerHTML = studentList().map((s, i) => `
+    
+    const q = byId("admin-search-student") ? byId("admin-search-student").value.toLowerCase().trim() : "";
+    const h = byId("admin-filter-halaqah") ? byId("admin-filter-halaqah").value : "";
+    const k = byId("admin-filter-kelas") ? byId("admin-filter-kelas").value : "";
+
+    const filtered = studentList().filter(s => 
+        (!q || s.nama.toLowerCase().includes(q)) &&
+        (!h || s.halaqah === h) &&
+        (!k || s.kelas === k)
+    );
+
+    list.innerHTML = filtered.map((s, i) => `
         <tr class="border-b border-[#e4dccb] hover:bg-[#fcfaf5]">
             <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${i+1}</td>
             <td class="px-4 py-2 border-r border-[#e4dccb] font-semibold">${esc(s.nama)}</td>
@@ -274,17 +307,29 @@ function renderAdminStudents() {
 function renderAdminClasses() {
     const list = byId("admin-class-list");
     if (!list) return;
-    const classes = {};
+
+    let classes = [];
+    if (window.masterKelas && window.masterKelas.length > 0) {
+        classes = window.masterKelas.map(k => k.nama);
+    } else {
+        classes = [...new Set(studentList().map(s => s.kelas).filter(Boolean))];
+    }
+
+    const studentCount = {};
     studentList().forEach(s => {
-        if (s.kelas) {
-            if (!classes[s.kelas]) classes[s.kelas] = [];
-            classes[s.kelas].push(s.nama);
-        }
+        if (s.kelas) studentCount[s.kelas] = (studentCount[s.kelas] || 0) + 1;
     });
-    list.innerHTML = Object.keys(classes).sort((a,b) => a.localeCompare(b, "id", {numeric: true})).map(c => `
-        <div class="canva-card p-3 rounded-xl border border-stone-200 bg-white flex flex-col justify-center items-center text-center shadow-sm">
-            <p class="font-bold text-xl text-emerald-700">${esc(c)}</p>
-            <p class="text-xs text-stone-500 mt-1 font-semibold">${classes[c].length} Santri</p>
+
+    list.innerHTML = classes.sort((a,b) => a.localeCompare(b, "id", {numeric: true})).map(c => `
+        <div class="canva-card p-3 rounded-xl border border-stone-200 bg-white flex flex-col justify-between shadow-sm">
+            <div class="text-center mb-2">
+                <p class="font-bold text-xl text-emerald-700">${esc(c)}</p>
+                <p class="text-xs text-stone-500 font-semibold">${studentCount[c] || 0} Santri</p>
+            </div>
+            <div class="flex justify-center gap-2 mt-2 pt-2 border-t border-stone-100">
+                <button class="text-emerald-600 hover:text-emerald-800 text-xs font-bold" onclick="openKelasModal('${esc(c)}')">Edit</button>
+                <button class="text-rose-600 hover:text-rose-800 text-xs font-bold" onclick="deleteKelasAdmin('${esc(c)}', ${studentCount[c] || 0})">Hapus</button>
+            </div>
         </div>
     `).join('');
 }
@@ -295,6 +340,11 @@ function render() {
   populateAllFilters(); renderStats(); renderProgressionChart(); renderLeaderboard(); renderHistory(); renderTeachers(); renderMutasi(); renderRekapBulanan(); renderRekapUjianGlobal(); initCalendar(); 
   if (window.lucide) lucide.createIcons();
   if (typeof window.renderRoster === 'function') window.renderRoster();
+  if (byId("lap-3") && !byId("lap-3").classList.contains("hidden")) {
+      populateAdminFilters();
+      renderAdminStudents();
+      renderAdminClasses();
+  }
 }
 window.render = render;
 
@@ -306,6 +356,60 @@ async function deleteActivity(record, button) { if (confirm("Yakin batalkan/hapu
 async function deleteStudent(student, button) { if (confirm(`Yakin hapus santri ${student.nama}? (Riwayat tetap aman)`)) { button.disabled = true; button.textContent = "Proses..."; await window.dataSdk.deleteSantri({ id: student.id }); } }
 async function deleteTeacher(halaqah, button) { if (confirm(`Yakin hapus halaqah [${halaqah.nama}]?`)) { button.disabled = true; button.textContent = "Proses..."; await window.dataSdk.deleteHalaqah({ id: halaqah.id }); } }
 
+window.openKelasModal = function(namaLama = null) {
+    byId("kelas-modal").classList.remove("hidden");
+    byId("kelas-modal-title").textContent = namaLama ? "Edit Kelas" : "Tambah Kelas";
+    byId("kelas-old-name").value = namaLama || "";
+    byId("kelas-name").value = namaLama || "";
+    byId("kelas-error").classList.add("hidden");
+    byId("kelas-name").focus();
+};
+
+window.deleteKelasAdmin = async function(nama, count) {
+    if (count > 0) {
+        alert(`Kelas "${nama}" masih memiliki ${count} santri. Pindahkan atau hapus santri terlebih dahulu sebelum menghapus kelas.`);
+        return;
+    }
+    if (!confirm(`Yakin ingin menghapus kelas "${nama}"?`)) return;
+    
+    try {
+        const res = await window.dataSdk.deleteKelas({ nama });
+        if (res.isOk) showToast("Kelas dihapus");
+        else alert(res.message || "Gagal menghapus");
+    } catch(e) { alert("Gagal menghapus"); }
+};
+
+if (byId("add-kelas-admin")) byId("add-kelas-admin").addEventListener("click", () => window.openKelasModal());
+if (byId("close-kelas-modal")) byId("close-kelas-modal").addEventListener("click", () => { byId("kelas-modal").classList.add("hidden"); byId("kelas-form").reset(); });
+
+if (byId("kelas-form")) byId("kelas-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const oldName = byId("kelas-old-name").value;
+    const newName = byId("kelas-name").value.trim();
+    const btn = byId("kelas-submit");
+    const err = byId("kelas-error");
+    
+    if (!newName) return;
+    btn.disabled = true; err.classList.add("hidden");
+
+    let result;
+    if (oldName) {
+        result = await window.dataSdk.updateKelas({ oldName, newName });
+    } else {
+        result = await window.dataSdk.createKelas({ nama: newName });
+    }
+    
+    btn.disabled = false;
+    if (result.isOk) {
+        byId("kelas-modal").classList.add("hidden");
+        e.target.reset();
+        showToast("Data kelas disimpan");
+    } else {
+        err.textContent = result.message || "Gagal menyimpan";
+        err.classList.remove("hidden");
+    }
+});
+
 // EVENT LISTENERS (BULK & FORMS)
 if (byId("btn-hadir-semua")) byId("btn-hadir-semua").addEventListener("click", async function() { const students = filteredStudents(); if (students.length === 0) return alert("Tidak ada santri."); if (!confirm("Tandai HADIR semua santri di daftar ini?")) return; const btn = this; const orig = btn.innerHTML; btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" style="width:16px;height:16px"></i> Proses...`; btn.disabled = true; const isoDate = getIsoForDate(getActiveDate()); const payloads = students.map(s => ({ nama_santri: s.nama, kelas: s.kelas, halaqah: getHalaqahName(s), tanggal: isoDate, tipe: "kehadiran", kehadiran: "Hadir" })); const result = await window.dataSdk.bulkAttendance(payloads); btn.innerHTML = orig; btn.disabled = false; if (window.lucide) lucide.createIcons(); showToast(result.message || "Selesai", !result.isOk); });
 if (byId("btn-alfa-semua")) byId("btn-alfa-semua").addEventListener("click", async function() { const students = filteredStudents(); if (students.length === 0) return alert("Tidak ada santri."); if (!confirm("Tandai ALFA semua santri di daftar ini?")) return; const btn = this; const orig = btn.innerHTML; btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin" style="width:16px;height:16px"></i> Proses...`; btn.disabled = true; const isoDate = getIsoForDate(getActiveDate()); const payloads = students.map(s => ({ nama_santri: s.nama, kelas: s.kelas, halaqah: getHalaqahName(s), tanggal: isoDate, tipe: "kehadiran", kehadiran: "Alfa" })); const result = await window.dataSdk.bulkAttendance(payloads); btn.innerHTML = orig; btn.disabled = false; if (window.lucide) lucide.createIcons(); showToast(result.message || "Selesai", !result.isOk); });
@@ -314,6 +418,10 @@ if (byId("add-student-btn-mobile")) byId("add-student-btn-mobile").addEventListe
 if (byId("add-teacher-btn")) byId("add-teacher-btn").addEventListener("click", () => openProfileModal("teacher"));
 if (byId("close-modal")) byId("close-modal").addEventListener("click", closeProfileModal);
 if (byId("add-student-admin")) byId("add-student-admin").addEventListener("click", () => openProfileModal("student"));
+
+if (byId("admin-search-student")) byId("admin-search-student").addEventListener("input", renderAdminStudents);
+if (byId("admin-filter-halaqah")) byId("admin-filter-halaqah").addEventListener("change", renderAdminStudents);
+if (byId("admin-filter-kelas")) byId("admin-filter-kelas").addEventListener("change", renderAdminStudents);
 
 if (byId("setoran-form")) byId("setoran-form").addEventListener("submit", async e => {
   e.preventDefault(); const error = byId("setoran-error"); error.classList.add("hidden"); const tipe = byId("f-tipe-setoran").value; const isIqra = tipe === "Iqra"; const katQuran = byId("f-kategori-quran").value; const baris = byId("f-baris").value === "custom" ? Number(byId("f-baris-custom").value) : Number(byId("f-baris").value); let juzVal, surahVal, ayatVal;
@@ -427,7 +535,6 @@ function init() {
   if (byId("rekap-bulan-input")) byId("rekap-bulan-input").value = new Date().toISOString().slice(0, 7);
   populateJuz(); populateBaris(); setupTipeSetoranToggle(); populateAllFilters();
   
-  // DEBUG API
   if (!window.APP_CONFIG || !window.APP_CONFIG.gasUrl) {
     console.error("GAS URL belum disetel di config.js!");
     showToast("GAS URL belum disetel di config.js!", true);
