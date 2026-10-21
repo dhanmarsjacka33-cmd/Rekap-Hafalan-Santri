@@ -37,10 +37,7 @@ function showToastBaru(message, type = 'success') {
  * ==========================================
  */
 function openPecahModal(presetAsal = '', presetTujuan = '') {
-  // Ambil dari fungsi halaqahList() milik app.js
   const halaqahData = halaqahList(); 
-  
-  // Gunakan nama variabel 'listHalaqah' agar tidak bentrok dengan nama fungsi
   const listHalaqah = halaqahData.map(h => h.nama).sort((a,b) => a.localeCompare(b, "id", {numeric: true}));
   
   const selAsal = document.getElementById('select-asal');

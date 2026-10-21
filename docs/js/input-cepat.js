@@ -20,7 +20,6 @@ function renderInputCepat() {
     return true;
   });
 
-  // Batasi render maksimal 50 agar HP tidak freeze
   const displayStudents = students.slice(0, 50);
   container.innerHTML = '';
 
@@ -42,10 +41,7 @@ function renderInputCepat() {
 
     const card = document.createElement('div');
     card.className = `roster-card bg-white border border-stone-200 rounded-xl p-3 shadow-sm ${hasSetoran ? 'sudah-setor' : ''}`;
-    card.dataset.nama = s.nama;
-    card.dataset.kelas = s.kelas;
-    card.dataset.halaqah = s.halaqah;
-    card.dataset.index = index;
+    card.dataset.nama = s.nama; card.dataset.kelas = s.kelas; card.dataset.halaqah = s.halaqah; card.dataset.index = index;
 
     card.innerHTML = `
       <div class="flex justify-between items-center mb-3">
@@ -96,17 +92,13 @@ function renderInputCepat() {
       const btn = e.currentTarget;
       const juzInput = card.querySelector('.input-juz');
       const halInput = card.querySelector('.input-hal');
-      const juz = juzInput.value.trim();
-      const hal = halInput.value.trim();
+      const juz = juzInput.value.trim(); const hal = halInput.value.trim();
 
-      juzInput.classList.remove('input-error');
-      halInput.classList.remove('input-error');
-      
+      juzInput.classList.remove('input-error'); halInput.classList.remove('input-error');
       if (!juz) { juzInput.classList.add('input-error'); juzInput.focus(); return; }
       if (!hal) { halInput.classList.add('input-error'); halInput.focus(); return; }
 
-      btn.innerHTML = 'Menyimpan...';
-      btn.disabled = true;
+      btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
 
       const payload = {
         nama_santri: s.nama, kelas: s.kelas, halaqah: s.halaqah,
@@ -117,7 +109,7 @@ function renderInputCepat() {
       };
 
       try {
-        const res = await window.dataSdk.create(payload, true); // skipRefresh = true
+        const res = await window.dataSdk.create(payload, true);
         if (res.isOk) {
           card.classList.add('sudah-setor');
           card.querySelector('.check-icon').classList.remove('hidden');
@@ -152,9 +144,7 @@ function renderInputCepat() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const searchInput = document.getElementById('search-input-cepat');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderInputCepat(); });
-  }
+  if (searchInput) searchInput.addEventListener('input', (e) => { searchQuery = e.target.value.toLowerCase(); renderInputCepat(); });
 
   document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', (e) => {
@@ -166,28 +156,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const btnMassal = document.getElementById('btn-isi-massal');
-  if (btnMassal) {
-    btnMassal.addEventListener('click', () => {
-      const juz = prompt("Masukkan angka Juz untuk MENGISI SEMUA BARIS yang kosong:");
-      if (juz) {
-        document.querySelectorAll('.input-juz').forEach(input => {
-          if (!input.value && !input.disabled) input.value = juz;
-        });
-        showToast("Juz berhasil diisi massal");
-      }
-    });
-  }
+  if (btnMassal) btnMassal.addEventListener('click', () => {
+    const juz = prompt("Masukkan angka Juz untuk MENGISI SEMUA BARIS yang kosong:");
+    if (juz) {
+      document.querySelectorAll('.input-juz').forEach(input => { if (!input.value && !input.disabled) input.value = juz; });
+      showToast("Juz berhasil diisi massal");
+    }
+  });
 
-  document.getElementById('nav-input').addEventListener('click', () => {
-    setTimeout(() => {
-      if (searchInput) searchInput.focus();
-      if (typeof renderInputCepat === 'function') renderInputCepat();
-    }, 200);
+  const navInput = document.getElementById('nav-input');
+  if (navInput) navInput.addEventListener('click', () => {
+    setTimeout(() => { if (searchInput) searchInput.focus(); if (typeof renderInputCepat === 'function') renderInputCepat(); }, 200);
   });
 
   const originalRender = window.render;
-  if (originalRender) {
-    window.render = function() { originalRender(); renderInputCepat(); };
-  }
+  if (originalRender) window.render = function() { originalRender(); renderInputCepat(); };
   setTimeout(renderInputCepat, 500);
 });
