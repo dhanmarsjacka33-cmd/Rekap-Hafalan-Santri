@@ -99,6 +99,10 @@ function switchRaporTab(tab) {
       else btn.className = "px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
     }
   });
+  if (tab === 'lap-3') {
+      renderAdminStudents();
+      renderAdminClasses();
+  }
 }
 
 if (byId('toggle-filter-btn')) byId('toggle-filter-btn').addEventListener('click', () => { const body = byId('filter-body'), chev = byId('filter-chevron'); body.classList.toggle('hidden'); chev.style.transform = body.classList.contains('hidden') ? 'rotate(180deg)' : 'rotate(0deg)'; });
@@ -238,6 +242,41 @@ function renderRekapBulanan() {
 }
 function renderRekapUjianGlobal() { const h = byId("rekap-ujian-halaqah").value, k = byId("rekap-ujian-kelas").value; const allUjian = (window.records || []).filter(r => r.tipe === "ujian_semester"); const filtered = allUjian.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); const list = byId("rekap-ujian-list"); list.innerHTML = ""; byId("rekap-ujian-empty").classList.toggle("hidden", filtered.length > 0); filtered.forEach((u, i) => { const tr = document.createElement("tr"); tr.className = "border-b border-amber-200/50 hover:bg-amber-50/20"; let predClass = "text-indigo-700 bg-indigo-50"; if (u.status === "Roosib" || u.status === "Maqbuul") predClass = "text-rose-700 bg-rose-50"; else if (u.status.includes("Jayyid")) predClass = "text-emerald-700 bg-emerald-50"; const parts = (u.evaluasi || "").split("| Fashahah:"); const fash = parts.length > 1 ? parts[1].trim() : "-"; tr.innerHTML = ` <td class="text-center px-3 py-2 border-r border-amber-200/50 text-stone-500">${i+1}</td> <td class="px-4 py-2 border-r border-amber-200/50 font-semibold">${esc(u.nama_santri)}</td> <td class="text-center px-3 py-2 border-r border-amber-200/50 text-xs">${esc(u.kelas)}</td> <td class="text-center px-4 py-2 border-r border-amber-200/50 font-bold text-[#1f6f54] text-xs">${esc(u.surah)}</td> <td class="text-center px-3 py-2 border-r border-amber-200/50 text-xs text-stone-500">${new Date(u.tanggal).toLocaleDateString("id-ID", {day: "2-digit", month: "short"})}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-bold">${esc(u.juz)}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-bold">${esc(u.jumlah_baris)}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-bold">${esc(fash)}</td> <td class="text-center px-2 py-2 border-r border-amber-200/50 font-black text-lg">${esc(u.ayat)}</td> <td class="text-center px-4 py-2"><span class="px-2 py-1 rounded text-[11px] font-bold uppercase tracking-wider ${predClass}">${esc(u.status)}</span></td>`; list.appendChild(tr); }); }
 
+function renderAdminStudents() {
+    const list = byId("admin-student-list");
+    if (!list) return;
+    list.innerHTML = studentList().map((s, i) => `
+        <tr class="border-b border-[#e4dccb] hover:bg-[#fcfaf5]">
+            <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${i+1}</td>
+            <td class="px-4 py-2 border-r border-[#e4dccb] font-semibold">${esc(s.nama)}</td>
+            <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${esc(s.kelas)}</td>
+            <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${esc(s.halaqah)}</td>
+            <td class="px-4 py-2 text-right">
+                <button class="text-emerald-600 hover:text-emerald-800 font-bold text-xs" onclick="openProfileModal('student', masterSantri.find(x => x.id === '${s.id}'))">Edit</button>
+                <button class="text-rose-600 hover:text-rose-800 font-bold text-xs ml-2" onclick="deleteStudent(masterSantri.find(x => x.id === '${s.id}'), this)">Hapus</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderAdminClasses() {
+    const list = byId("admin-class-list");
+    if (!list) return;
+    const classes = {};
+    studentList().forEach(s => {
+        if (s.kelas) {
+            if (!classes[s.kelas]) classes[s.kelas] = [];
+            classes[s.kelas].push(s.nama);
+        }
+    });
+    list.innerHTML = Object.keys(classes).sort((a,b) => a.localeCompare(b, "id", {numeric: true})).map(c => `
+        <div class="canva-card p-3 rounded-xl border border-stone-200 bg-white flex flex-col justify-center items-center text-center shadow-sm">
+            <p class="font-bold text-xl text-emerald-700">${esc(c)}</p>
+            <p class="text-xs text-stone-500 mt-1 font-semibold">${classes[c].length} Santri</p>
+        </div>
+    `).join('');
+}
+
 async function initCalendar() { await ensureCalendarLoaded(); if (typeof FullCalendar === 'undefined') return; const calendarEl = byId('agenda-calendar-container'); if (!calendarEl) return; const agendaRecords = (window.records || []).filter(r => r.tipe === "agenda_tahfidz"); const events = agendaRecords.map(r => ({ id: r.__backendId, title: r.nama_santri, start: r.tanggal, color: r.status, extendedProps: { description: r.evaluasi } })); if (fullCalendarInstance) fullCalendarInstance.destroy(); fullCalendarInstance = new FullCalendar.Calendar(calendarEl, { initialView: 'dayGridMonth', locale: 'id', headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' }, events: events, eventClick: async function(info) { const detail = info.event.extendedProps.description ? `\nKeterangan: ${info.event.extendedProps.description}` : ""; if (confirm(`Agenda: ${info.event.title}${detail}\n\nHapus jadwal ini?`)) { const rec = (window.records || []).find(r => r.__backendId === info.event.id); if (rec) await window.dataSdk.delete(rec); } } }); }
 
 function render() {
@@ -262,6 +301,7 @@ if (byId("add-student-btn")) byId("add-student-btn").addEventListener("click", (
 if (byId("add-student-btn-mobile")) byId("add-student-btn-mobile").addEventListener("click", () => openProfileModal("student"));
 if (byId("add-teacher-btn")) byId("add-teacher-btn").addEventListener("click", () => openProfileModal("teacher"));
 if (byId("close-modal")) byId("close-modal").addEventListener("click", closeProfileModal);
+if (byId("add-student-admin")) byId("add-student-admin").addEventListener("click", () => openProfileModal("student"));
 
 if (byId("setoran-form")) byId("setoran-form").addEventListener("submit", async e => {
   e.preventDefault(); const error = byId("setoran-error"); error.classList.add("hidden"); const tipe = byId("f-tipe-setoran").value; const isIqra = tipe === "Iqra"; const katQuran = byId("f-kategori-quran").value; const baris = byId("f-baris").value === "custom" ? Number(byId("f-baris-custom").value) : Number(byId("f-baris").value); let juzVal, surahVal, ayatVal;

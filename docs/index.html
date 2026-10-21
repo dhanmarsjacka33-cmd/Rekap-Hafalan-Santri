@@ -59,19 +59,21 @@
 
     @media (max-width: 768px) {
       .modal-content { width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
-      /* Sembunyikan Top Nav di HP */
       .desktop-nav { display: none !important; }
     }
     @media (min-width: 769px) {
-      /* Sembunyikan Bottom Nav di Desktop */
       .mobile-nav { display: none !important; }
     }
+    
+    /* Print Styles for Rapor A4 */
     @media print {
       body.print-mode-rapor { background: white !important; overflow: visible !important; }
       body.print-mode-rapor * { visibility: hidden; }
       body.print-mode-rapor #print-area, body.print-mode-rapor #print-area * { visibility: visible; }
-      body.print-mode-rapor #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
-      body.print-mode-rapor .poster { box-shadow: none !important; }
+      body.print-mode-rapor #print-area { position: static !important; width: 100%; margin: 0; padding: 0; }
+      body.print-mode-rapor .poster { box-shadow: none !important; border: none !important; outline: none !important; margin-bottom: 0 !important; }
+      body.print-mode-rapor .page-break-after { page-break-after: always; break-after: page; }
+      body.print-mode-rapor .page-break-before { page-break-before: always; break-before: page; }
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       @page { size: A4 landscape; margin: 10mm; }
     }
@@ -86,7 +88,6 @@
         <p class="text-[10px] tracking-[.2em] font-bold uppercase mb-1.5 text-[#a3d9c9]">MANAJEMEN HAFALAN</p>
         <h1 class="text-3xl font-bold">Rekap Hafalan Santri</h1>
       </div>
-      <!-- Top Nav (Desktop Only) -->
       <nav class="desktop-nav flex gap-2 p-1.5 bg-[#26372d] rounded-xl shadow-inner overflow-x-auto">
         <button id="nav-dashboard" class="nav-btn bg-white shadow-sm text-[#1f6f54] font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="layout-dashboard" style="width:16px;height:16px"></i> Dashboard</button>
         <button id="nav-input" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="edit-3" style="width:16px;height:16px"></i> Input Data</button>
@@ -402,7 +403,7 @@
         <div class="bg-stone-200 p-1 rounded-xl flex gap-1 whitespace-nowrap">
           <button id="tab-lap-1" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all" onclick="switchRaporTab('lap-1')">Rekap & Rapor</button>
           <button id="tab-lap-2" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-2')">Log & Mutasi</button>
-          <button id="tab-lap-3" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-3')">Manajemen Halaqah</button>
+          <button id="tab-lap-3" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-3')">Manajemen Data</button>
         </div>
       </div>
 
@@ -422,7 +423,7 @@
               <button id="print-rekap-btn" type="button" class="canva-button rounded-lg px-3 py-2 font-semibold inline-flex items-center gap-1.5 text-sm"><i data-lucide="printer" style="width:16px;height:16px"></i> Cetak</button>
             </div>
           </div>
-          <div id="rekap-grid-body" class="mt-4 border-t border-stone-100 pt-4">
+          <div id="rekap-grid-body" class="mt-4 border-t border-stone-100 pt-4 hidden">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 w-full md:w-[32rem]">
               <div><label class="block text-xs font-semibold mb-1" for="rekap-halaqah">Halaqah</label><select id="rekap-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
               <div><label class="block text-xs font-semibold mb-1" for="rekap-kelas">Kelas</label><select id="rekap-kelas" class="field-input filter-select text-xs !py-2"></select></div>
@@ -472,7 +473,8 @@
 
           <div id="report-poster-wrapper" class="hidden mt-8">
             <div id="print-area">
-              <div id="report-poster" class="poster bg-[#fffdf8]">
+              <!-- HALAMAN 1: POSTER RINGKASAN -->
+              <div id="report-poster" class="poster bg-[#fffdf8] page-break-after">
                 <header class="poster-header relative overflow-hidden px-8 py-7 text-white">
                   <div class="relative z-10 flex items-start justify-between">
                     <div>
@@ -571,7 +573,9 @@
                   </section>
                 </div>
               </div>
-              <div class="mt-6">
+              
+              <!-- HALAMAN 2: RINCIAN SETORAN -->
+              <div class="mt-6 page-break-before">
                 <h3 class="text-[11px] font-bold uppercase tracking-[.14em] mb-2 text-[#1f6f54]">Rincian 10 Setoran Terakhir</h3>
                 <div class="rounded-xl overflow-hidden border border-[#d8e5dd]">
                   <table class="history-table w-full text-left bg-white border-none m-0">
@@ -593,32 +597,39 @@
           </div>
         </section>
 
+        <!-- REKAP HASIL UJIAN GLOBAL (COLLAPSIBLE) -->
         <section class="canva-card rounded-2xl p-5 shadow-sm mt-6">
-          <h2 class="text-xl font-bold mb-4">Rekap Hasil Ujian Global</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 w-full md:w-[32rem]">
-            <div><label class="block text-xs font-semibold mb-1" for="rekap-ujian-halaqah">Halaqah</label><select id="rekap-ujian-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
-            <div><label class="block text-xs font-semibold mb-1" for="rekap-ujian-kelas">Kelas</label><select id="rekap-ujian-kelas" class="field-input filter-select text-xs !py-2"></select></div>
+          <div class="flex justify-between items-center mb-2 cursor-pointer hover:bg-stone-50 p-2 -mx-2 rounded-lg transition-colors" onclick="document.getElementById('rekap-ujian-body').classList.toggle('hidden'); document.getElementById('icon-ujian-rekap').classList.toggle('rotate-180');">
+            <div>
+              <h2 class="text-xl font-bold flex items-center gap-2">Rekap Hasil Ujian Global <i id="icon-ujian-rekap" data-lucide="chevron-down" style="width:20px;height:20px" class="transition-transform duration-300"></i></h2>
+            </div>
           </div>
-          <div class="overflow-x-auto rounded-xl border border-[#e4dccb]">
-            <table class="w-full min-w-[840px] text-sm">
-              <thead class="bg-amber-50 text-amber-900">
-                <tr>
-                  <th class="text-center px-3 py-2 font-semibold w-12 border-r border-amber-200/50">No</th>
-                  <th class="text-left px-4 py-2 font-semibold border-r border-amber-200/50">Nama Santri</th>
-                  <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50">Kelas</th>
-                  <th class="text-center px-4 py-2 font-semibold border-r border-amber-200/50">Tipe</th>
-                  <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50">Tgl</th>
-                  <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50 text-xs">Kel</th>
-                  <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50 text-xs">Taj</th>
-                  <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50 text-xs">Fas</th>
-                  <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50">Rata2</th>
-                  <th class="text-center px-4 py-2 font-semibold">Predikat</th>
-                </tr>
-              </thead>
-              <tbody id="rekap-ujian-list"></tbody>
-            </table>
+          <div id="rekap-ujian-body" class="mt-4 border-t border-stone-100 pt-4 hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 w-full md:w-[32rem]">
+              <div><label class="block text-xs font-semibold mb-1" for="rekap-ujian-halaqah">Halaqah</label><select id="rekap-ujian-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
+              <div><label class="block text-xs font-semibold mb-1" for="rekap-ujian-kelas">Kelas</label><select id="rekap-ujian-kelas" class="field-input filter-select text-xs !py-2"></select></div>
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-[#e4dccb]">
+              <table class="w-full min-w-[840px] text-sm">
+                <thead class="bg-amber-50 text-amber-900">
+                  <tr>
+                    <th class="text-center px-3 py-2 font-semibold w-12 border-r border-amber-200/50">No</th>
+                    <th class="text-left px-4 py-2 font-semibold border-r border-amber-200/50">Nama Santri</th>
+                    <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50">Kelas</th>
+                    <th class="text-center px-4 py-2 font-semibold border-r border-amber-200/50">Tipe</th>
+                    <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50">Tgl</th>
+                    <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50 text-xs">Kel</th>
+                    <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50 text-xs">Taj</th>
+                    <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50 text-xs">Fas</th>
+                    <th class="text-center px-3 py-2 font-semibold border-r border-amber-200/50">Rata2</th>
+                    <th class="text-center px-4 py-2 font-semibold">Predikat</th>
+                  </tr>
+                </thead>
+                <tbody id="rekap-ujian-list"></tbody>
+              </table>
+            </div>
+            <p id="rekap-ujian-empty" class="text-center text-stone-500 py-8 hidden">Tidak ada data.</p>
           </div>
-          <p id="rekap-ujian-empty" class="text-center text-stone-500 py-8 hidden">Tidak ada data.</p>
         </section>
       </div>
 
@@ -662,15 +673,52 @@
         </div>
       </div>
 
-      <!-- TAB 3: MANAJEMEN HALAQAH -->
+      <!-- TAB 3: MANAJEMEN DATA -->
       <div id="lap-3" class="space-y-6 hidden">
+        
+        <!-- Manajemen Santri -->
+        <section class="canva-card rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-xl font-bold">Manajemen Santri</h2>
+              <p class="text-stone-500 text-sm mt-1">Daftar seluruh santri aktif. Anda dapat mengedit atau menghapus santri.</p>
+            </div>
+            <button id="add-student-admin" type="button" class="canva-button rounded-lg px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center">
+              <i data-lucide="user-plus" style="width:17px;height:17px"></i> Tambah Santri Baru
+            </button>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-[#e4dccb]">
+            <table class="w-full min-w-[640px] text-sm text-left">
+              <thead class="bg-[#f3eee2] text-[#4a4436]">
+                <tr>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb] w-12">No</th>
+                  <th class="px-4 py-2 font-semibold border-r border-[#e4dccb]">Nama Santri</th>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb]">Kelas</th>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb]">Halaqah</th>
+                  <th class="px-4 py-2 text-right font-semibold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="admin-student-list" class="bg-white"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Manajemen Kelas -->
+        <section class="canva-card rounded-2xl p-5 shadow-sm">
+          <div class="mb-5">
+            <h2 class="text-xl font-bold">Manajemen Kelas</h2>
+            <p class="text-stone-500 text-sm mt-1">Daftar kelas aktif beserta jumlah santri saat ini.</p>
+          </div>
+          <div id="admin-class-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+        </section>
+
+        <!-- Manajemen Halaqah & Pengampu -->
         <section class="canva-card rounded-2xl p-5 shadow-sm">
           <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
             <div>
               <h2 class="text-xl font-bold">Manajemen Halaqah & Pengampu</h2>
               <p class="text-stone-500 text-sm mt-1">Tambah, edit, dan hapus halaqah beserta gurunya.</p>
             </div>
-            
             <div class="flex flex-wrap gap-2">
               <button id="btn-pecah-halaqah" class="canva-button px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm bg-indigo-600 inline-flex items-center gap-2" aria-label="Buka Pecah Halaqah">
                 <i data-lucide="scissors" style="width:17px;height:17px"></i> Pecah Halaqah
