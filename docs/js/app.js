@@ -67,6 +67,7 @@ navBtns.forEach(btn => {
     
     if (targetView === 'view-agenda' && fullCalendarInstance) setTimeout(() => fullCalendarInstance.render(), 150);
     if (targetView === 'view-input' && typeof window.renderInputCepat === 'function') setTimeout(window.renderInputCepat, 100);
+    if (targetView === 'view-laporan') switchRaporTab('lap-1'); // Reset ke tab awal
     window.scrollTo(0, 0);
   });
 });
@@ -79,19 +80,25 @@ function switchDashTab(tab) {
     const btn = byId('tab-dash-' + t);
     if (el) el.classList.toggle('hidden', t !== tab);
     if (btn) {
-      if (t === tab) {
-        btn.className = "px-6 py-2 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all";
-      } else {
-        btn.className = "px-6 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
-      }
+      if (t === tab) btn.className = "px-6 py-2 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all";
+      else btn.className = "px-6 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
     }
   });
-  if (tab === 'analitik') {
-    renderProgressionChart();
-    renderLeaderboard();
-  } else {
-    renderStats();
-  }
+  if (tab === 'analitik') { renderProgressionChart(); renderLeaderboard(); } else { renderStats(); }
+}
+
+// Rapor Tabs
+function switchRaporTab(tab) {
+  const tabs = ['lap-1', 'lap-2', 'lap-3'];
+  tabs.forEach(t => {
+    const el = byId(t);
+    const btn = byId('tab-' + t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+    if (btn) {
+      if (t === tab) btn.className = "px-4 py-2 rounded-lg text-xs md:text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all";
+      else btn.className = "px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
+    }
+  });
 }
 
 if (byId('toggle-filter-btn')) byId('toggle-filter-btn').addEventListener('click', () => { const body = byId('filter-body'), chev = byId('filter-chevron'); body.classList.toggle('hidden'); chev.style.transform = body.classList.contains('hidden') ? 'rotate(180deg)' : 'rotate(0deg)'; });
@@ -236,7 +243,7 @@ async function initCalendar() { await ensureCalendarLoaded(); if (typeof FullCal
 function render() {
   populateAllFilters(); renderStats(); renderProgressionChart(); renderLeaderboard(); renderHistory(); renderTeachers(); renderMutasi(); renderRekapBulanan(); renderRekapUjianGlobal(); initCalendar(); 
   if (window.lucide) lucide.createIcons();
-  if (typeof window.renderRoster === 'function') window.renderRoster(); // Hanya jalan jika dipanggil eksplisit dari mode toggle
+  if (typeof window.renderRoster === 'function') window.renderRoster();
 }
 window.render = render;
 
