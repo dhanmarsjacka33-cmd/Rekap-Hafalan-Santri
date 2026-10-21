@@ -1,6 +1,6 @@
 let filterMode = 'semua';
 let searchQuery = '';
-let isFastMode = true; // Default ke mode cepat untuk HP
+let isFastMode = true; 
 
 function renderInputCepat() {
   const container = document.getElementById('list-input-cepat');
@@ -41,7 +41,7 @@ function renderInputCepat() {
     const lastSetoran = window.records.filter(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal))[0];
 
     const card = document.createElement('div');
-    card.className = `roster-card bg-white border border-stone-200 rounded-xl p-3 shadow-sm ${hasSetoran ? 'sudah-setor' : ''}`;
+    card.className = `roster-card bg-white border border-stone-200 rounded-xl p-4 shadow-sm ${hasSetoran ? 'sudah-setor' : ''}`;
     card.dataset.nama = s.nama; card.dataset.kelas = s.kelas; card.dataset.halaqah = s.halaqah; card.dataset.index = index;
 
     card.innerHTML = `
@@ -55,57 +55,121 @@ function renderInputCepat() {
         </div>
       </div>
       
-      <div class="grid grid-cols-2 gap-2 mb-3">
-        <select class="input-base input-jenis" ${hasSetoran ? 'disabled' : ''}>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <select class="input-base fm-tipe" ${hasSetoran ? 'disabled' : ''}>
+          <option value="Al-Quran">Al-Qur'an</option>
+          <option value="Iqra">Iqra</option>
+        </select>
+        <select class="input-base fm-kat" ${hasSetoran ? 'disabled' : ''}>
           <option value="Ziyadah">Ziyadah (Baru)</option>
           <option value="Murojaah">Murojaah (Ulang)</option>
         </select>
-        <select class="input-base input-nilai" ${hasSetoran ? 'disabled' : ''}>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <select class="input-base fm-juz" ${hasSetoran ? 'disabled' : ''}></select>
+        <select class="input-base fm-surah" ${hasSetoran ? 'disabled' : ''}></select>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <input type="number" class="input-base fm-ayat" placeholder="Ayat (1-286)" min="1" max="286" ${hasSetoran ? 'disabled' : ''}>
+        <input type="number" class="input-base fm-baris" placeholder="Baris" min="1" ${hasSetoran ? 'disabled' : ''}>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <select class="input-base fm-status" ${hasSetoran ? 'disabled' : ''}>
           <option value="Lancar">Lancar</option>
           <option value="Perlu Perbaikan">Perbaikan</option>
           <option value="Diulang">Diulang</option>
         </select>
-        <input type="number" class="input-base input-juz focus:ring-emerald-500" placeholder="Juz" inputmode="numeric" ${hasSetoran ? 'disabled' : ''}>
-        <input type="text" class="input-base input-hal" placeholder="Hal / Ayat" ${hasSetoran ? 'disabled' : ''}>
+        <input type="text" class="input-base fm-catatan" placeholder="Catatan (Opsional)" ${hasSetoran ? 'disabled' : ''}>
       </div>
 
       <div class="flex gap-2">
-        <button class="btn-secondary px-3 text-xs btn-salin" title="Salin setoran terakhir" ${!lastSetoran || hasSetoran ? 'disabled' : ''}>
+        <button class="btn-outline px-3 text-xs btn-salin" title="Salin setoran terakhir" ${!lastSetoran || hasSetoran ? 'disabled' : ''}>
           <i data-lucide="clipboard-paste" style="width:14px;height:14px"></i> Salin
         </button>
-        <button class="btn-primary flex-1 text-sm btn-simpan" ${hasSetoran ? 'disabled' : ''}>
+        <button class="btn-main flex-1 text-sm btn-simpan" ${hasSetoran ? 'disabled' : ''}>
           ${hasSetoran ? 'Tersimpan ✓' : 'Simpan Setoran'}
         </button>
       </div>
     `;
 
+    // Inisialisasi Dropdown Juz & Surah untuk Card ini
+    const juzSel = card.querySelector('.fm-juz');
+    const surahSel = card.querySelector('.fm-surah');
+    const tipeSel = card.querySelector('.fm-tipe');
+    const ayatInp = card.querySelector('.fm-ayat');
+
+    function populateJuzSelect() {
+       juzSel.innerHTML = '<option value="">Juz</option>';
+       for(let j=30; j>=1; j--) juzSel.innerHTML += `<option value="${j}">Juz ${j}</option>`;
+    }
+    populateJuzSelect();
+
+    juzSel.addEventListener('change', () => {
+       const j = juzSel.value;
+       surahSel.innerHTML = '<option value="">Surah</option>';
+       if (JUZ_MAPPING[j]) JUZ_MAPPING[j].forEach(item => surahSel.innerHTML += `<option value="${item[0]}">${item[0]}</option>`);
+    });
+
+    tipeSel.addEventListener('change', () => {
+        if (tipeSel.value === 'Iqra') {
+            juzSel.innerHTML = '<option value="">Jilid</option><option value="Iqra Jilid 1">Iqra Jilid 1</option><option value="Iqra Jilid 2">Iqra Jilid 2</option><option value="Iqra Jilid 3">Iqra Jilid 3</option><option value="Iqra Jilid 4">Iqra Jilid 4</option><option value="Iqra Jilid 5">Iqra Jilid 5</option><option value="Iqra Jilid 6">Iqra Jilid 6</option>';
+            surahSel.innerHTML = '<option value="">Halaman</option>';
+            for(let p=1; p<=32; p++) surahSel.innerHTML += `<option value="${p}">Hal ${p}</option>`;
+            ayatInp.value = "1"; ayatInp.disabled = true;
+        } else {
+            populateJuzSelect();
+            surahSel.innerHTML = '<option value="">Surah</option>';
+            ayatInp.disabled = false; ayatInp.value = "";
+        }
+    });
+
     card.querySelector('.btn-salin').addEventListener('click', () => {
       if (!lastSetoran) return;
-      card.querySelector('.input-juz').value = lastSetoran.juz || '';
-      card.querySelector('.input-hal').value = lastSetoran.surah || '';
-      card.querySelector('.input-jenis').value = String(lastSetoran.evaluasi).includes('[Murojaah]') ? 'Murojaah' : 'Ziyadah';
-      card.querySelector('.input-nilai').value = lastSetoran.status || 'Lancar';
-      card.querySelector('.input-hal').focus();
-      showToast("Data disalin, silakan ubah Hal/Ayat");
+      if (lastSetoran.juz?.startsWith("Iqra")) {
+          tipeSel.value = "Iqra"; tipeSel.dispatchEvent(new Event('change'));
+          juzSel.value = lastSetoran.juz;
+          setTimeout(() => surahSel.value = lastSetoran.surah, 50);
+      } else {
+          tipeSel.value = "Al-Quran"; tipeSel.dispatchEvent(new Event('change'));
+          juzSel.value = lastSetoran.juz; juzSel.dispatchEvent(new Event('change'));
+          setTimeout(() => surahSel.value = lastSetoran.surah, 50);
+      }
+      card.querySelector('.fm-kat').value = String(lastSetoran.evaluasi).includes('[Murojaah]') ? 'Murojaah' : 'Ziyadah';
+      card.querySelector('.fm-status').value = lastSetoran.status || 'Lancar';
+      card.querySelector('.fm-baris').value = lastSetoran.jumlah_baris || 1;
+      card.querySelector('.fm-catatan').focus();
+      showToast("Data disalin, silakan ubah detailnya");
     });
 
     card.querySelector('.btn-simpan').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
-      const juzInput = card.querySelector('.input-juz');
-      const halInput = card.querySelector('.input-hal');
-      const juz = juzInput.value.trim(); const hal = halInput.value.trim();
+      const tipe = tipeSel.value;
+      const kat = card.querySelector('.fm-kat').value;
+      const juz = juzSel.value;
+      const surah = surahSel.value;
+      const ayat = ayatInp.value;
+      const baris = card.querySelector('.fm-baris').value;
+      const status = card.querySelector('.fm-status').value;
+      const catatan = card.querySelector('.fm-catatan').value.trim();
 
-      juzInput.classList.remove('input-error'); halInput.classList.remove('input-error');
-      if (!juz) { juzInput.classList.add('input-error'); juzInput.focus(); return; }
-      if (!hal) { halInput.classList.add('input-error'); halInput.focus(); return; }
+      [juzSel, surahSel, ayatInp, card.querySelector('.fm-baris')].forEach(el => el.classList.remove('input-error'));
+
+      if (!juz) { juzSel.classList.add('input-error'); juzSel.focus(); return; }
+      if (!surah) { surahSel.classList.add('input-error'); surahSel.focus(); return; }
+      if (!baris || baris < 1) { card.querySelector('.fm-baris').classList.add('input-error'); card.querySelector('.fm-baris').focus(); return; }
+      if (tipe === 'Al-Quran' && (!ayat || ayat < 1)) { ayatInp.classList.add('input-error'); ayatInp.focus(); return; }
 
       btn.innerHTML = 'Menyimpan...'; btn.disabled = true;
 
       const payload = {
         nama_santri: s.nama, kelas: s.kelas, halaqah: s.halaqah,
-        tanggal: getIsoForDate(targetDate), juz: juz, surah: hal, ayat: "",
-        jumlah_baris: 1, status: card.querySelector('.input-nilai').value,
-        evaluasi: `[${card.querySelector('.input-jenis').value}]`,
+        tanggal: getIsoForDate(targetDate),
+        juz: juz, surah: surah, ayat: tipe === 'Iqra' ? "1" : ayat,
+        jumlah_baris: baris, status: status,
+        evaluasi: `[${kat}] ${catatan}`,
         tipe: "setoran_kehadiran", kehadiran: "Hadir"
       };
 
@@ -123,7 +187,7 @@ function renderInputCepat() {
             const nextCard = container.querySelector('.roster-card:not(.sudah-setor)');
             if (nextCard) {
               nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              const nextJuz = nextCard.querySelector('.input-juz');
+              const nextJuz = nextCard.querySelector('.fm-juz');
               if (nextJuz) nextJuz.focus();
             }
           }, 300);
@@ -155,21 +219,20 @@ function toggleMode(mode) {
     isFastMode = false;
     rosterContainer.classList.remove('hidden');
     fastContainer.classList.add('hidden');
-    btnRoster.className = "btn-primary px-4 py-2 text-sm flex items-center gap-2";
-    btnCepat.className = "btn-secondary px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white";
-    renderRoster(); // Panggil fungsi render tabel
+    btnRoster.className = "btn-main px-4 py-2 text-sm flex items-center gap-2";
+    btnCepat.className = "btn-outline px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white";
+    renderRoster();
   } else {
     isFastMode = true;
     rosterContainer.classList.add('hidden');
     fastContainer.classList.remove('hidden');
-    btnRoster.className = "btn-secondary px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white";
-    btnCepat.className = "btn-primary px-4 py-2 text-sm flex items-center gap-2";
+    btnRoster.className = "btn-outline px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white";
+    btnCepat.className = "btn-main px-4 py-2 text-sm flex items-center gap-2";
     renderInputCepat();
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Cek layar (default: Cepat untuk HP, Roster untuk Desktop)
   const isMobile = window.innerWidth < 768;
   toggleMode(isMobile ? 'cepat' : 'roster');
 
@@ -192,12 +255,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnMassal) btnMassal.addEventListener('click', () => {
     const juz = prompt("Masukkan angka Juz untuk MENGISI SEMUA BARIS yang kosong:");
     if (juz) {
-      document.querySelectorAll('.input-juz').forEach(input => { if (!input.value && !input.disabled) input.value = juz; });
+      document.querySelectorAll('.fm-juz').forEach(select => {
+          if (!select.value && !select.disabled) {
+              select.value = juz;
+              select.dispatchEvent(new Event('change'));
+          }
+      });
       showToast("Juz berhasil diisi massal");
     }
   });
 
-  // Patch render utama
   const originalRender = window.render;
   window.render = function() { originalRender(); if (isFastMode) renderInputCepat(); else renderRoster(); };
 });

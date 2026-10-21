@@ -34,18 +34,65 @@ function getHalaqahName(s) { return s.halaqah || ''; }
 
 // Navigation
 const navBtns = document.querySelectorAll('.nav-btn');
+const bottomNavBtns = document.querySelectorAll('.nav-bottom-btn');
 const views = ['view-dashboard', 'view-input', 'view-laporan', 'view-agenda'];
+
+function syncNav(targetView) {
+  navBtns.forEach(b => {
+    const isActive = b.id === 'nav-' + targetView.split('-')[1];
+    b.classList.remove('bg-white', 'shadow-sm', 'text-[#1f6f54]', 'font-bold');
+    b.classList.add('text-stone-300', 'font-semibold');
+    if (isActive) {
+      b.classList.add('bg-white', 'shadow-sm', 'text-[#1f6f54]', 'font-bold');
+      b.classList.remove('text-stone-300', 'font-semibold');
+    }
+  });
+  bottomNavBtns.forEach(b => {
+    const isActive = b.getAttribute('onclick').includes(targetView);
+    b.classList.remove('text-emerald-600');
+    b.classList.add('text-stone-400');
+    if (isActive) {
+      b.classList.add('text-emerald-600');
+      b.classList.remove('text-stone-400');
+    }
+  });
+}
+
 navBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    navBtns.forEach(b => { b.classList.remove('bg-white', 'shadow-sm', 'text-[#1f6f54]', 'font-bold'); b.classList.add('text-stone-300', 'font-semibold'); });
-    btn.classList.add('bg-white', 'shadow-sm', 'text-[#1f6f54]', 'font-bold'); btn.classList.remove('text-stone-300', 'font-semibold');
     const targetView = 'view-' + btn.id.split('-')[1];
     views.forEach(v => { if(byId(v)) byId(v).classList.add('hidden'); });
     if(byId(targetView)) byId(targetView).classList.remove('hidden');
+    syncNav(targetView);
+    
     if (targetView === 'view-agenda' && fullCalendarInstance) setTimeout(() => fullCalendarInstance.render(), 150);
     if (targetView === 'view-input' && typeof window.renderInputCepat === 'function') setTimeout(window.renderInputCepat, 100);
+    window.scrollTo(0, 0);
   });
 });
+
+// Dashboard Tabs
+function switchDashTab(tab) {
+  const tabs = ['ringkasan', 'analitik'];
+  tabs.forEach(t => {
+    const el = byId('dash-' + t);
+    const btn = byId('tab-dash-' + t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+    if (btn) {
+      if (t === tab) {
+        btn.className = "px-6 py-2 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all";
+      } else {
+        btn.className = "px-6 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
+      }
+    }
+  });
+  if (tab === 'analitik') {
+    renderProgressionChart();
+    renderLeaderboard();
+  } else {
+    renderStats();
+  }
+}
 
 if (byId('toggle-filter-btn')) byId('toggle-filter-btn').addEventListener('click', () => { const body = byId('filter-body'), chev = byId('filter-chevron'); body.classList.toggle('hidden'); chev.style.transform = body.classList.contains('hidden') ? 'rotate(180deg)' : 'rotate(0deg)'; });
 

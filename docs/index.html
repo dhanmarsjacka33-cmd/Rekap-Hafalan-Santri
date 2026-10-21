@@ -41,23 +41,25 @@
     .toast { background: #1f6f54; color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px; animation: slideIn 0.3s ease forwards; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     
-    /* Optimasi iOS Safari */
-    .overflow-x-auto, #list-input-cepat, body { -webkit-overflow-scrolling: touch; }
-    input, select, textarea { font-size: 16px !important; }
-
-    /* Design Tokens Input Cepat */
-    .btn-primary { background-color: #059669; color: white; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 44px; }
-    .btn-primary:active { transform: scale(0.97); background-color: #047857; }
-    .btn-secondary { background-color: #f5f5f4; color: #44403c; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid #e7e5e4; }
-    .input-base { width: 100%; border: 1px solid #d6d3d1; border-radius: 0.5rem; padding: 0.6rem 0.75rem; background: white; font-size: 0.95rem; transition: border 0.2s; }
+    /* Design Tokens */
+    .btn-main { background-color: #059669; color: white; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 1rem; }
+    .btn-main:active { transform: scale(0.97); background-color: #047857; }
+    .btn-outline { background-color: #ffffff; color: #44403c; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 44px; border: 1px solid #e7e5e4; padding: 0 1rem; }
+    .btn-outline:active { transform: scale(0.97); background-color: #f5f5f4; }
+    .btn-danger { background-color: #e11d48; color: white; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 1rem; }
+    .btn-danger:active { transform: scale(0.97); background-color: #be123c; }
+    .input-base { width: 100%; border: 1px solid #d6d3d1; border-radius: 0.5rem; padding: 0.6rem 0.75rem; background: white; font-size: 0.95rem; transition: border 0.2s; min-height: 44px; }
     .input-base:focus { outline: none; border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15); }
     .input-error { border-color: #e11d48 !important; background-color: #fff1f2; }
     .chip { padding: 0.4rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; border: 1px solid #e7e5e4; background: white; color: #78716c; transition: all 0.2s; cursor: pointer; }
     .chip.active { background: #059669; color: white; border-color: #059669; }
-    .roster-card { transition: opacity 0.3s, background-color 0.3s; }
-    .roster-card.sudah-setor { opacity: 0.5; background-color: #f8fafc; pointer-events: none; }
-    .roster-card.sudah-setor .btn-simpan { background-color: #d1fae5; color: #047857; }
+    .roster-card { transition: opacity 0.3s, background-color 0.3s; border-left: 4px solid #059669; }
+    .roster-card.sudah-setor { opacity: 0.6; background-color: #f8fafc; pointer-events: none; border-left-color: #cbd5e1; }
+    .roster-card.sudah-setor .btn-main { background-color: #d1fae5; color: #047857; }
 
+    @media (max-width: 768px) {
+      .modal-content { width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+    }
     @media print {
       body.print-mode-rapor { background: white !important; overflow: visible !important; }
       body.print-mode-rapor * { visibility: hidden; }
@@ -69,16 +71,17 @@
     }
   </style>
 </head>
-<body>
+<body class="pb-20 md:pb-0">
 <div id="main-ui">
 <div class="w-full min-h-screen pb-10">
-  <header class="relative w-full bg-[#1c2821] text-white py-8 px-6">
+  <header class="relative w-full bg-[#1c2821] text-white py-6 px-6">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
         <p class="text-[10px] tracking-[.2em] font-bold uppercase mb-1.5 text-[#a3d9c9]">MANAJEMEN HAFALAN</p>
         <h1 class="text-3xl font-bold">Rekap Hafalan Santri</h1>
       </div>
-      <nav class="flex gap-2 p-1.5 bg-[#26372d] rounded-xl shadow-inner overflow-x-auto">
+      <!-- Top Nav (Hidden on Mobile) -->
+      <nav class="hidden md:flex gap-2 p-1.5 bg-[#26372d] rounded-xl shadow-inner overflow-x-auto">
         <button id="nav-dashboard" class="nav-btn bg-white shadow-sm text-[#1f6f54] font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="layout-dashboard" style="width:16px;height:16px"></i> Dashboard</button>
         <button id="nav-input" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="edit-3" style="width:16px;height:16px"></i> Input Data</button>
         <button id="nav-laporan" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="folder-open" style="width:16px;height:16px"></i> Mutasi & Rapor</button>
@@ -87,7 +90,29 @@
     </div>
   </header>
 
+  <!-- Bottom Nav (Mobile Only) -->
+  <nav class="fixed bottom-0 w-full bg-white border-t border-stone-200 flex justify-around py-2 px-1 md:hidden z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+    <button class="nav-bottom-btn flex flex-col items-center gap-1 text-emerald-600" onclick="document.getElementById('nav-dashboard').click()">
+      <i data-lucide="layout-dashboard" style="width:20px;height:20px"></i>
+      <span class="text-[10px] font-semibold">Home</span>
+    </button>
+    <button class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-input').click()">
+      <i data-lucide="edit-3" style="width:20px;height:20px"></i>
+      <span class="text-[10px] font-semibold">Input</span>
+    </button>
+    <button class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-laporan').click()">
+      <i data-lucide="folder-open" style="width:20px;height:20px"></i>
+      <span class="text-[10px] font-semibold">Rapor</span>
+    </button>
+    <button class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-agenda').click()">
+      <i data-lucide="calendar" style="width:20px;height:20px"></i>
+      <span class="text-[10px] font-semibold">Agenda</span>
+    </button>
+  </nav>
+
   <main class="w-full max-w-7xl mx-auto px-4 md:px-6 py-7">
+    
+    <!-- Filter Global (Collapsible) -->
     <section class="canva-card rounded-2xl shadow-sm mb-6 transition-all duration-300">
       <button id="toggle-filter-btn" class="w-full flex items-center justify-between p-4 font-bold text-lg text-stone-800 hover:bg-stone-50 rounded-2xl">
         <div class="flex items-center gap-2 text-[#1f6f54]">
@@ -96,10 +121,10 @@
         </div>
         <div class="flex items-center gap-3">
           <span class="text-xs text-stone-400 font-normal hidden sm:inline">Klik untuk buka/tutup</span>
-          <i id="filter-chevron" data-lucide="chevron-up" style="width:20px;height:20px" class="transition-transform duration-300 text-stone-400"></i>
+          <i id="filter-chevron" data-lucide="chevron-down" style="width:20px;height:20px" class="transition-transform duration-300 text-stone-400"></i>
         </div>
       </button>
-      <div id="filter-body" class="px-5 pb-5 border-t border-stone-100 pt-4">
+      <div id="filter-body" class="px-5 pb-5 border-t border-stone-100 pt-4 hidden">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-[48rem]">
           <div>
             <label class="block text-sm font-semibold mb-1" for="f-search">Cari Nama Santri</label>
@@ -116,84 +141,94 @@
 
     <!-- VIEW: DASHBOARD -->
     <div id="view-dashboard" class="space-y-6 soft-enter block">
-      <section class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div class="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
-          <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center">
-            <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Santri Tampil</p>
-            <p id="stat-santri" class="text-3xl font-bold text-[#1f6f54]">0</p>
-          </article>
-          <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center">
-            <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Hadir (Hari Ini)</p>
-            <p id="stat-hadir" class="text-3xl font-bold text-[#20744e]">0</p>
-          </article>
-          <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center lg:col-span-1 col-span-2">
-            <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Total Setoran Ziyadah</p>
-            <p class="text-3xl font-bold text-[#1f6f54]"><span id="stat-baris">0</span> <span class="text-sm font-normal text-stone-400">baris</span></p>
-          </article>
+      <!-- Dashboard Tabs -->
+      <div class="flex justify-center mb-4">
+        <div class="bg-stone-200 p-1 rounded-xl flex gap-1">
+          <button id="tab-dash-ringkasan" class="px-6 py-2 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all" onclick="switchDashTab('ringkasan')">Ringkasan</button>
+          <button id="tab-dash-analitik" class="px-6 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchDashTab('analitik')">Analitik & Leaderboard</button>
         </div>
-        <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col">
-            <h3 class="text-xs font-bold text-stone-600 mb-2">Persentase Kehadiran</h3>
-            <div class="relative w-full h-[160px] mx-auto mt-2"><canvas id="attendanceChart"></canvas></div>
-          </article>
-          <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col">
-            <h3 class="text-xs font-bold text-stone-600 mb-2">Status Setoran Harian</h3>
-            <div class="relative w-full h-[160px] mx-auto mt-2"><canvas id="setoranChart"></canvas></div>
-          </article>
-          <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col">
-            <h3 class="text-xs font-bold text-stone-600 mb-2">Analitik Hasil Ujian</h3>
-            <div class="relative w-full h-[160px] mx-auto mt-2"><canvas id="ujianChart"></canvas></div>
-          </article>
-        </div>
-      </section>
+      </div>
 
-      <section class="canva-card rounded-2xl p-5 shadow-sm">
-        <h2 class="text-xl font-bold">Grafik Perkembangan Hafalan (Baris)</h2>
-        <p class="text-stone-500 text-sm mt-1 mb-4">Tren penambahan ziyadah dan murojaah per hari.</p>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5 w-full xl:w-[50rem]">
-          <div><label class="block text-xs font-semibold mb-1">Mulai Tgl</label><input type="date" id="prog-start" class="field-input text-xs !py-2"></div>
-          <div><label class="block text-xs font-semibold mb-1">Sampai Tgl</label><input type="date" id="prog-end" class="field-input text-xs !py-2"></div>
-          <div><label class="block text-xs font-semibold mb-1">Halaqah</label><select id="prog-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
-          <div><label class="block text-xs font-semibold mb-1">Kelas</label><select id="prog-kelas" class="field-input filter-select text-xs !py-2"></select></div>
-          <div><label class="block text-xs font-semibold mb-1">Nama Santri</label><select id="prog-nama" class="field-input filter-select text-xs !py-2"></select></div>
-        </div>
-        <div class="relative w-full h-[250px] mx-auto"><canvas id="progressionChart"></canvas></div>
-        <p id="prog-empty" class="text-stone-500 text-center py-8 hidden">Tidak ada data untuk filter ini.</p>
-      </section>
+      <!-- Tab Content: Ringkasan -->
+      <div id="dash-ringkasan" class="space-y-6">
+        <section class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div class="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
+            <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center">
+              <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Santri Tampil</p>
+              <p id="stat-santri" class="text-3xl font-bold text-[#1f6f54]">0</p>
+            </article>
+            <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center">
+              <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Hadir (Hari Ini)</p>
+              <p id="stat-hadir" class="text-3xl font-bold text-[#20744e]">0</p>
+            </article>
+            <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center lg:col-span-1 col-span-2">
+              <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Total Setoran Ziyadah</p>
+              <p class="text-3xl font-bold text-[#1f6f54]"><span id="stat-baris">0</span> <span class="text-sm font-normal text-stone-400">baris</span></p>
+            </article>
+          </div>
+          <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col">
+              <h3 class="text-xs font-bold text-stone-600 mb-2">Persentase Kehadiran</h3>
+              <div class="relative w-full h-[200px] mx-auto mt-2"><canvas id="attendanceChart"></canvas></div>
+            </article>
+            <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col">
+              <h3 class="text-xs font-bold text-stone-600 mb-2">Status Setoran Harian</h3>
+              <div class="relative w-full h-[200px] mx-auto mt-2"><canvas id="setoranChart"></canvas></div>
+            </article>
+          </div>
+        </section>
+      </div>
 
-      <section class="canva-card rounded-2xl p-5 shadow-sm">
-        <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-5">
-          <div>
-            <h2 class="text-xl font-bold">Leaderboard & Peringkat</h2>
-            <p class="text-stone-500 text-sm mt-1">Pencapaian, buronan, dan kandidat kenaikan.</p>
-            <div class="flex flex-wrap gap-2 mt-3 items-center">
-              <button id="tab-leaderboard-quran" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-[#1f6f54] text-white transition-all">Al-Quran</button>
-              <button id="tab-leaderboard-iqra" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-[#f3eee2] text-[#4a4436] transition-all">Iqra</button>
-              <button id="tab-leaderboard-ujian" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-[#f3eee2] text-[#4a4436] transition-all">Nilai Ujian</button>
-              <button id="tab-leaderboard-wanted" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-rose-50 text-rose-800 border border-rose-200 transition-all hover:bg-rose-100 flex items-center gap-1"><i data-lucide="skull" style="width:14px;height:14px"></i> Most Wanted</button>
-              <button id="tab-leaderboard-kandidat" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 transition-all hover:bg-indigo-100 flex items-center gap-1"><i data-lucide="graduation-cap" style="width:14px;height:14px"></i> Kandidat Kenaikan</button>
-              <button id="print-leaderboard-btn" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-stone-700 text-white shadow-sm inline-flex items-center gap-1.5 hover:opacity-90 ml-auto xl:ml-2"><i data-lucide="printer" style="width:14px;height:14px"></i> Cetak PDF</button>
+      <!-- Tab Content: Analitik -->
+      <div id="dash-analitik" class="space-y-6 hidden">
+        <section class="canva-card rounded-2xl p-5 shadow-sm">
+          <h2 class="text-xl font-bold">Grafik Perkembangan Hafalan (Baris)</h2>
+          <p class="text-stone-500 text-sm mt-1 mb-4">Tren penambahan ziyadah dan murojaah per hari.</p>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5 w-full xl:w-[50rem]">
+            <div><label class="block text-xs font-semibold mb-1">Mulai Tgl</label><input type="date" id="prog-start" class="field-input text-xs !py-2"></div>
+            <div><label class="block text-xs font-semibold mb-1">Sampai Tgl</label><input type="date" id="prog-end" class="field-input text-xs !py-2"></div>
+            <div><label class="block text-xs font-semibold mb-1">Halaqah</label><select id="prog-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
+            <div><label class="block text-xs font-semibold mb-1">Kelas</label><select id="prog-kelas" class="field-input filter-select text-xs !py-2"></select></div>
+            <div><label class="block text-xs font-semibold mb-1">Nama Santri</label><select id="prog-nama" class="field-input filter-select text-xs !py-2"></select></div>
+          </div>
+          <div class="relative w-full h-[250px] mx-auto"><canvas id="progressionChart"></canvas></div>
+          <p id="prog-empty" class="text-stone-500 text-center py-8 hidden">Tidak ada data untuk filter ini.</p>
+        </section>
+
+        <section class="canva-card rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-xl font-bold">Leaderboard & Peringkat</h2>
+              <p class="text-stone-500 text-sm mt-1">Pencapaian, buronan, dan kandidat kenaikan.</p>
+              <div class="flex flex-wrap gap-2 mt-3 items-center">
+                <button id="tab-leaderboard-quran" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-[#1f6f54] text-white transition-all">Al-Quran</button>
+                <button id="tab-leaderboard-iqra" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-[#f3eee2] text-[#4a4436] transition-all">Iqra</button>
+                <button id="tab-leaderboard-ujian" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-[#f3eee2] text-[#4a4436] transition-all">Nilai Ujian</button>
+                <button id="tab-leaderboard-wanted" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-rose-50 text-rose-800 border border-rose-200 transition-all hover:bg-rose-100 flex items-center gap-1"><i data-lucide="skull" style="width:14px;height:14px"></i> Most Wanted</button>
+                <button id="tab-leaderboard-kandidat" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 transition-all hover:bg-indigo-100 flex items-center gap-1"><i data-lucide="graduation-cap" style="width:14px;height:14px"></i> Kandidat Kenaikan</button>
+                <button id="print-leaderboard-btn" class="px-4 py-1.5 text-xs font-semibold rounded-full bg-stone-700 text-white shadow-sm inline-flex items-center gap-1.5 hover:opacity-90 ml-auto xl:ml-2"><i data-lucide="printer" style="width:14px;height:14px"></i> Cetak PDF</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 w-full xl:w-[50rem]">
+              <div id="filter-jenjang-wrap">
+                <label class="block text-xs font-semibold mb-1" for="leaderboard-jenjang">Jenjang</label>
+                <select id="leaderboard-jenjang" class="field-input filter-select text-xs !py-2">
+                  <option value="">Semua Jenjang</option><option value="SMP">SMP (Kls 7-9)</option><option value="SMA">SMA (Kls 10-12)</option>
+                </select>
+              </div>
+              <div id="filter-halaqah-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-halaqah">Halaqah</label><select id="leaderboard-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
+              <div id="filter-kelas-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-kelas">Kelas</label><select id="leaderboard-kelas" class="field-input filter-select text-xs !py-2"></select></div>
+              <div id="filter-start-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-start">Mulai Tgl</label><input type="date" id="leaderboard-start" class="field-input text-xs !py-2"></div>
+              <div id="filter-end-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-end">Sampai Tgl</label><input type="date" id="leaderboard-end" class="field-input text-xs !py-2"></div>
             </div>
           </div>
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-3 w-full xl:w-[50rem]">
-            <div id="filter-jenjang-wrap">
-              <label class="block text-xs font-semibold mb-1" for="leaderboard-jenjang">Jenjang</label>
-              <select id="leaderboard-jenjang" class="field-input filter-select text-xs !py-2">
-                <option value="">Semua Jenjang</option><option value="SMP">SMP (Kls 7-9)</option><option value="SMA">Kls 10-12)</option>
-              </select>
-            </div>
-            <div id="filter-halaqah-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-halaqah">Halaqah</label><select id="leaderboard-halaqah" class="field-input filter-select text-xs !py-2"></select></div>
-            <div id="filter-kelas-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-kelas">Kelas</label><select id="leaderboard-kelas" class="field-input filter-select text-xs !py-2"></select></div>
-            <div id="filter-start-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-start">Mulai Tgl</label><input type="date" id="leaderboard-start" class="field-input text-xs !py-2"></div>
-            <div id="filter-end-wrap"><label class="block text-xs font-semibold mb-1" for="leaderboard-end">Sampai Tgl</label><input type="date" id="leaderboard-end" class="field-input text-xs !py-2"></div>
+          <div class="flex justify-end mb-3">
+            <button id="add-kandidat-btn" type="button" class="hidden canva-button rounded-lg px-4 py-2 text-xs font-semibold inline-flex items-center gap-1.5 bg-indigo-600 shadow-sm"><i data-lucide="plus" style="width:14px;height:14px"></i> Input Kandidat Manual</button>
           </div>
-        </div>
-        <div class="flex justify-end mb-3">
-          <button id="add-kandidat-btn" type="button" class="hidden canva-button rounded-lg px-4 py-2 text-xs font-semibold inline-flex items-center gap-1.5 bg-indigo-600 shadow-sm"><i data-lucide="plus" style="width:14px;height:14px"></i> Input Kandidat Manual</button>
-        </div>
-        <div id="leaderboard-list" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-        <p id="leaderboard-empty" class="text-stone-500 text-center py-8">Belum ada data untuk filter ini.</p>
-      </section>
+          <div id="leaderboard-list" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+          <p id="leaderboard-empty" class="text-stone-500 text-center py-8">Belum ada data untuk filter ini.</p>
+        </section>
+      </div>
     </div>
 
     <!-- VIEW: INPUT DATA -->
@@ -201,10 +236,10 @@
       
       <!-- Header Mode Toggle -->
       <div class="flex justify-end gap-2 mb-2">
-        <button id="mode-roster-btn" class="btn-secondary px-4 py-2 text-sm flex items-center gap-2 border-stone-300 text-stone-600 bg-white">
+        <button id="mode-roster-btn" class="btn-outline px-4 py-2 text-sm flex items-center gap-2 text-stone-600 bg-white">
           <i data-lucide="list" style="width:16px;height:16px"></i> Mode Roster
         </button>
-        <button id="mode-cepat-btn" class="btn-primary px-4 py-2 text-sm flex items-center gap-2">
+        <button id="mode-cepat-btn" class="btn-main px-4 py-2 text-sm flex items-center gap-2">
           <i data-lucide="zap" style="width:16px;height:16px"></i> Mode Cepat
         </button>
       </div>
@@ -636,10 +671,10 @@
             <button id="btn-pecah-halaqah" class="canva-button px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm bg-indigo-600 inline-flex items-center gap-2" aria-label="Buka Pecah Halaqah">
               <i data-lucide="scissors" style="width:17px;height:17px"></i> Pecah Halaqah
             </button>
-            <button id="btn-migrasi" class="bg-rose-700 text-white hover:bg-rose-800 px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm inline-flex items-center gap-2" aria-label="Jalankan Migrasi Skenario">
+            <button id="btn-migrasi" class="btn-danger px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm inline-flex items-center gap-2" aria-label="Jalankan Migrasi Skenario">
               <i data-lucide="git-merge" style="width:17px;height:17px"></i> Migrasi Skenario
             </button>
-            <button id="add-teacher-btn" type="button" class="canva-button rounded-lg px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center">
+            <button id="add-teacher-btn" type="button" class="btn-outline px-4 py-2.5 rounded-lg font-semibold inline-flex gap-2 items-center justify-center">
               <i data-lucide="plus" style="width:17px;height:17px"></i> Tambah Halaqah
             </button>
           </div>
@@ -669,7 +704,7 @@
 
 <!-- Modal Profil -->
 <div id="profile-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
-  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-5 shadow-2xl">
+  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-5 shadow-2xl modal-content">
     <div class="flex items-start justify-between gap-3 mb-5">
       <div>
         <p id="modal-kicker" class="text-xs uppercase tracking-[.14em] font-bold text-[#1f6f54]"></p>
@@ -704,7 +739,7 @@
 
 <!-- Modal Kandidat -->
 <div id="kandidat-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
-  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl">
+  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl modal-content">
     <div class="flex items-start justify-between gap-3 mb-5">
       <div><p class="text-xs uppercase tracking-[.14em] font-bold text-indigo-600">MANUAL INPUT</p><h2 class="text-xl font-semibold mt-1">Tambah Kandidat Kenaikan</h2></div>
       <button id="close-kandidat-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button>
@@ -724,7 +759,7 @@
 
 <!-- Modal Agenda -->
 <div id="agenda-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
-  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl border-t-4 border-t-[#1f6f54]">
+  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl border-t-4 border-t-[#1f6f54] modal-content">
     <div class="flex items-start justify-between gap-3 mb-5">
       <div><p class="text-xs uppercase tracking-[.14em] font-bold text-[#1f6f54]">AGENDA BERSAMA</p><h2 class="text-xl font-semibold mt-1">Tambah Jadwal Baru</h2></div>
       <button id="close-agenda-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button>
@@ -751,7 +786,7 @@
 
 <!-- Modal Mutasi -->
 <div id="mutasi-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
-  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl">
+  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl modal-content">
     <div class="flex items-start justify-between gap-3 mb-5">
       <div><p class="text-xs uppercase tracking-[.14em] font-bold text-[#1f6f54]">MUTASI SANTRI</p><h2 class="text-xl font-semibold mt-1">Catat Kenaikan ke Tahfidz</h2></div>
       <button id="close-mutasi-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button>
@@ -774,9 +809,9 @@
   </div>
 </div>
 
-<!-- FITUR 1 & 3: MODAL PECAH HALAQAH -->
+<!-- Modal Pecah Halaqah -->
 <div id="modal-pecah" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100] modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-pecah-title">
-  <div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl relative">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl relative modal-content">
     <h2 id="modal-pecah-title" class="text-xl font-bold mb-4 text-[#1f6f54]">Pecah / Pindah Halaqah</h2>
     
     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -805,11 +840,10 @@
 
     <div class="flex justify-end gap-2 mt-auto">
       <button id="btn-close-pecah" class="px-4 py-2 border border-stone-300 rounded-lg font-semibold hover:bg-stone-50">Batal</button>
-      <button id="btn-confirm-pecah" class="px-4 py-2 bg-[#1f6f54] text-white rounded-lg font-semibold hover:opacity-90 shadow-sm">Konfirmasi Pindah</button>
+      <button id="btn-confirm-pecah" class="btn-main px-4 py-2 rounded-lg font-semibold shadow-sm">Konfirmasi Pindah</button>
     </div>
   </div>
 </div>
-<!-- END FITUR 1 & 3 -->
 
 </div>
 
