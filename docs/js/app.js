@@ -67,7 +67,7 @@ navBtns.forEach(btn => {
     
     if (targetView === 'view-agenda' && fullCalendarInstance) setTimeout(() => fullCalendarInstance.render(), 150);
     if (targetView === 'view-input' && typeof window.renderInputCepat === 'function') setTimeout(window.renderInputCepat, 100);
-    if (targetView === 'view-laporan') switchRaporTab('lap-1'); // Reset ke tab awal
+    if (targetView === 'view-laporan') switchRaporTab('lap-1');
     window.scrollTo(0, 0);
   });
 });
@@ -174,13 +174,25 @@ const isDuplicate = row => activityRecords().some(r => r.tipe === row.tipe && r.
 // CHARTS & STATS
 async function renderCharts(hadir, sakit, izin, alfa, lancar, perbaikan, diulang, dataUjian) {
   await ensureChartLoaded(); if (typeof Chart === 'undefined') return;
-  const ctxAtt = byId('attendanceChart'); if (attendanceChart) attendanceChart.destroy();
-  attendanceChart = new Chart(ctxAtt, { type: 'doughnut', data: { labels: ['Hadir','Sakit','Izin','Alfa'], datasets: [{ data: [hadir, sakit, izin, alfa], backgroundColor: ['#20744e','#d97706','#eab308','#a24c38'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 12, font: {size: 10}} } }, cutout: '70%' } });
-  const ctxSet = byId('setoranChart'); if (setoranChart) setoranChart.destroy();
-  setoranChart = new Chart(ctxSet, { type: 'bar', data: { labels: ['Lancar','Perbaikan','Diulang'], datasets: [{ label: 'Jumlah', data: [lancar, perbaikan, diulang], backgroundColor: ['#1f6f54','#f59e0b','#ef4444'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x:{grid:{display:false}}, y:{beginAtZero:true, ticks:{stepSize:1}} } } });
-  const ctxUjian = byId('ujianChart'); if (ujianChart) ujianChart.destroy();
-  let uM = 0, uJJ = 0, uJ = 0, uMq = 0, uR = 0; dataUjian.forEach(r => { if (r.status === "Mumtaaz") uM++; else if (r.status === "Jayyid Jiddan") uJJ++; else if (r.status === "Jayyid") uJ++; else if (r.status === "Maqbuul") uMq++; else if (r.status === "Roosib") uR++; });
-  ujianChart = new Chart(ctxUjian, { type: 'doughnut', data: { labels: ['Mumtaaz','Jayyid J.','Jayyid','Maqbuul','Roosib'], datasets: [{ data: [uM, uJJ, uJ, uMq, uR], backgroundColor: ['#047857','#059669','#34d399','#fbbf24','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 12, font: {size: 10}} } }, cutout: '60%' } });
+  
+  const ctxAtt = byId('attendanceChart'); 
+  if (ctxAtt) {
+    if (attendanceChart) attendanceChart.destroy();
+    attendanceChart = new Chart(ctxAtt, { type: 'doughnut', data: { labels: ['Hadir','Sakit','Izin','Alfa'], datasets: [{ data: [hadir, sakit, izin, alfa], backgroundColor: ['#20744e','#d97706','#eab308','#a24c38'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 12, font: {size: 10}} } }, cutout: '70%' } });
+  }
+  
+  const ctxSet = byId('setoranChart'); 
+  if (ctxSet) {
+    if (setoranChart) setoranChart.destroy();
+    setoranChart = new Chart(ctxSet, { type: 'bar', data: { labels: ['Lancar','Perbaikan','Diulang'], datasets: [{ label: 'Jumlah', data: [lancar, perbaikan, diulang], backgroundColor: ['#1f6f54','#f59e0b','#ef4444'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x:{grid:{display:false}}, y:{beginAtZero:true, ticks:{stepSize:1}} } } });
+  }
+
+  const ctxUjian = byId('ujianChart'); 
+  if (ctxUjian) {
+    if (ujianChart) ujianChart.destroy();
+    let uM = 0, uJJ = 0, uJ = 0, uMq = 0, uR = 0; dataUjian.forEach(r => { if (r.status === "Mumtaaz") uM++; else if (r.status === "Jayyid Jiddan") uJJ++; else if (r.status === "Jayyid") uJ++; else if (r.status === "Maqbuul") uMq++; else if (r.status === "Roosib") uR++; });
+    ujianChart = new Chart(ctxUjian, { type: 'doughnut', data: { labels: ['Mumtaaz','Jayyid J.','Jayyid','Maqbuul','Roosib'], datasets: [{ data: [uM, uJJ, uJ, uMq, uR], backgroundColor: ['#047857','#059669','#34d399','#fbbf24','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: {boxWidth: 12, font: {size: 10}} } }, cutout: '60%' } });
+  }
 }
 function renderStats() {
   const students = filteredStudents(); const targetDate = getActiveDate();
@@ -414,6 +426,19 @@ function init() {
   if (byId("global-input-date-roster")) byId("global-input-date-roster").value = todayKey();
   if (byId("rekap-bulan-input")) byId("rekap-bulan-input").value = new Date().toISOString().slice(0, 7);
   populateJuz(); populateBaris(); setupTipeSetoranToggle(); populateAllFilters();
-  window.dataSdk.init({ onDataChanged(data) { render(); } });
+  
+  // DEBUG API
+  if (!window.APP_CONFIG || !window.APP_CONFIG.gasUrl) {
+    console.error("GAS URL belum disetel di config.js!");
+    showToast("GAS URL belum disetel di config.js!", true);
+    return;
+  }
+
+  window.dataSdk.init({ 
+    onDataChanged(data) { 
+      console.log("Data loaded:", data.length, "records");
+      render(); 
+    } 
+  });
 }
 window.addEventListener("DOMContentLoaded", init);
