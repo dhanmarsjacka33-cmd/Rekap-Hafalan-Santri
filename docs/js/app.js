@@ -12,10 +12,8 @@ let fullCalendarInstance = null;
 let activeLeaderboardTab = "quran";
 let currentLeaderboardData = [];
 
-// Variabel ini akan diisi oleh dataSdk.init()
-let records = [];
-let masterSantri = [];
-let masterHalaqah = [];
+// CATATAN: Variabel records, masterSantri, dan masterHalaqah sengaja TIDAK dideklarasikan di sini.
+// Variabel tersebut sudah dibuat oleh api.js di dalam window (window.records, dll).
 
 // ============================================================
 // UTILITIES
@@ -71,7 +69,7 @@ const getPredikatUjian = (nilai) => {
 };
 
 const isProfile = r => ["profil_santri","profil_guru","hapus_santri","hapus_guru","snapshot","mutasi_tahfidz","ujian_semester","kandidat_tes","agenda_tahfidz"].includes(r.tipe);
-const activityRecords = () => records.filter(r => !isProfile(r));
+const activityRecords = () => window.records ? window.records.filter(r => !isProfile(r)) : [];
 const parseCat = ev => (ev && ev.startsWith("[Murojaah]")) ? "Murojaah" : "Ziyadah";
 const cleanEv = ev => ev ? ev.replace(/\[(Ziyadah|Murojaah)\]\s*/, "") : "";
 
@@ -83,17 +81,24 @@ const clearSelect = (sel, txt) => {
   if (!sel) return; sel.innerHTML = ""; option(sel, "", txt);
 };
 
+// Halaqah yang dikecualikan dari Most Wanted (kelas tahsin)
 const EXCLUDED_TAHSIN_HALAQAH = ["Halaqah 3","Halaqah 4","Halaqah 5","Halaqah 7","Halaqah 8","Halaqah 11","Halaqah 12","Halaqah 15","Halaqah 16"];
 
 // ============================================================
-// DATA ACCESS LAYER
+// DATA ACCESS LAYER (membaca dari window.api)
 // ============================================================
 function studentList() {
-  return masterSantri.filter(s => s.status === 'Aktif').sort((a, b) => a.nama.localeCompare(b.nama, "id"));
+  if (!window.masterSantri) return [];
+  return window.masterSantri
+    .filter(s => s.status === 'Aktif')
+    .sort((a, b) => a.nama.localeCompare(b.nama, "id"));
 }
 
 function halaqahList() {
-  return masterHalaqah.filter(h => h.status === 'Aktif').sort((a, b) => a.nama.localeCompare(b.nama, "id", {numeric: true}));
+  if (!window.masterHalaqah) return [];
+  return window.masterHalaqah
+    .filter(h => h.status === 'Aktif')
+    .sort((a, b) => a.nama.localeCompare(b.nama, "id", {numeric: true}));
 }
 
 function getHalaqahName(s) {
@@ -230,7 +235,7 @@ function populateHistoryNames() {
   const hR = byId("riwayat-filter-halaqah").value, kR = byId("riwayat-filter-kelas").value;
   const selP = byId("prog-nama"), curP = selP.value;
   const hP = byId("prog-halaqah").value, kP = byId("prog-kelas").value;
-  const allLogs = records.filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester");
+  const allLogs = window.records ? window.records.filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester") : [];
   const namesR = [...new Set(allLogs.filter(r => (!hR || r.halaqah === hR) && (!kR || r.kelas === kR)).map(r => r.nama_santri).filter(Boolean))].sort((a, b) => a.localeCompare(b, "id"));
   clearSelect(selR, "Semua nama"); namesR.forEach(n => option(selR, n, n));
   if ([...selR.options].some(o => o.value === curR)) selR.value = curR;
@@ -282,7 +287,7 @@ function renderRoster() {
     node.querySelector(".row-name").textContent = student.nama;
     const hasSetoran = activityRecords().some(r => r.nama_santri === student.nama && r.tipe === "setoran_kehadiran" && dateKey(r.tanggal) === targetDate);
     if (hasSetoran) node.querySelector(".row-setoran-badge").classList.remove("hidden");
-    const hasUjian = records.some(r => r.nama_santri === student.nama && r.tipe === "ujian_semester" && dateKey(r.tanggal) === targetDate);
+    const hasUjian = (window.records || []).some(r => r.nama_santri === student.nama && r.tipe === "ujian_semester" && dateKey(r.tanggal) === targetDate);
     if (hasUjian) node.querySelector(".row-ujian-badge").classList.remove("hidden");
     node.querySelector(".row-class").textContent = `Kelas ${student.kelas}`;
     const att = node.querySelector(".row-attendance");
@@ -460,7 +465,7 @@ function renderStats() {
     else alfa++;
   });
   const h = byId("f-halaqah").value, k = byId("f-kelas").value;
-  const allUjian = records.filter(r => r.tipe === "ujian_semester" && (!h || r.halaqah === h) && (!k || r.kelas === k));
+  const allUjian = (window.records || []).filter(r => r.tipe === "ujian_semester" && (!h || r.halaqah === h) && (!k || r.kelas === k));
   byId("stat-santri").textContent = students.length;
   byId("stat-hadir").textContent = hadir;
   byId("stat-baris").textContent = totalBaris;
@@ -524,7 +529,7 @@ function renderLeaderboard() {
     byId("filter-start-wrap").classList.add("hidden");
     byId("filter-end-wrap").classList.add("hidden");
     byId("filter-jenjang-wrap").classList.add("hidden");
-    const kDatas = records.filter(r => r.tipe === "kandidat_tes" && (!h || r.halaqah === h) && (!k || r.kelas === k)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+    const kDatas = (window.records || []).filter(r => r.tipe === "kandidat_tes" && (!h || r.halaqah === h) && (!k || r.kelas === k)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
     byId("leaderboard-empty").classList.toggle("hidden", kDatas.length > 0);
     kDatas.forEach(item => {
       const node = byId("kandidat-item-template").content.cloneNode(true);
@@ -594,7 +599,7 @@ function renderLeaderboard() {
       });
     } else if (activeLeaderboardTab === "ujian") {
       const map = new Map();
-      records.filter(r => activeStudentNames.has(r.nama_santri) && r.tipe === "ujian_semester" && 
+      (window.records || []).filter(r => activeStudentNames.has(r.nama_santri) && r.tipe === "ujian_semester" && 
         (!h || r.halaqah === h) && (!k || r.kelas === k) && (!jenjangFilter || getJenjang(r.kelas) === jenjangFilter) && 
         (!start || dateKey(r.tanggal) >= start) && (!end || dateKey(r.tanggal) <= end)
       ).forEach(r => {
@@ -621,8 +626,8 @@ function renderLeaderboard() {
       const targetDateStr = getActiveDate();
       const targetDateObj = new Date(targetDateStr + "T12:00:00");
       let earliestRecordDate = new Date();
-      if (records.length > 0) {
-        const times = records.map(r => new Date(dateKey(r.tanggal) + "T12:00:00").getTime()).filter(t => !isNaN(t));
+      if ((window.records || []).length > 0) {
+        const times = (window.records || []).map(r => new Date(dateKey(r.tanggal) + "T12:00:00").getTime()).filter(t => !isNaN(t));
         if (times.length > 0) earliestRecordDate = new Date(Math.min(...times));
       }
       const map = new Map();
@@ -677,7 +682,7 @@ function renderLeaderboard() {
 // ============================================================
 function renderHistory() {
   const h = byId("riwayat-filter-halaqah").value, k = byId("riwayat-filter-kelas").value, n = byId("riwayat-filter-nama").value;
-  const allLogs = records.filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester");
+  const allLogs = (window.records || []).filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester");
   const filtered = allLogs.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k) && (!n || r.nama_santri === n))
     .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
   const list = byId("riwayat-list"); list.innerHTML = "";
@@ -713,7 +718,7 @@ function renderHistory() {
 function renderMutasi() {
   const list = byId("mutasi-list"); list.innerHTML = "";
   const activeStudentNames = new Set(studentList().map(s => s.nama));
-  const mutasiData = records.filter(r => r.tipe === "mutasi_tahfidz" && activeStudentNames.has(r.nama_santri))
+  const mutasiData = (window.records || []).filter(r => r.tipe === "mutasi_tahfidz" && activeStudentNames.has(r.nama_santri))
     .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
   byId("mutasi-empty").classList.toggle("hidden", mutasiData.length > 0);
   mutasiData.forEach(m => {
@@ -793,7 +798,7 @@ function renderRekapBulanan() {
 
 function renderRekapUjianGlobal() {
   const h = byId("rekap-ujian-halaqah").value, k = byId("rekap-ujian-kelas").value;
-  const allUjian = records.filter(r => r.tipe === "ujian_semester");
+  const allUjian = (window.records || []).filter(r => r.tipe === "ujian_semester");
   const filtered = allUjian.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
   const list = byId("rekap-ujian-list"); list.innerHTML = "";
   byId("rekap-ujian-empty").classList.toggle("hidden", filtered.length > 0);
@@ -828,7 +833,7 @@ function initCalendar() {
   if (typeof FullCalendar === 'undefined') return;
   const calendarEl = byId('agenda-calendar-container');
   if (!calendarEl) return;
-  const agendaRecords = records.filter(r => r.tipe === "agenda_tahfidz");
+  const agendaRecords = (window.records || []).filter(r => r.tipe === "agenda_tahfidz");
   const events = agendaRecords.map(r => ({
     id: r.__backendId, title: r.nama_santri, start: r.tanggal,
     color: r.status, extendedProps: { description: r.evaluasi }
@@ -841,7 +846,7 @@ function initCalendar() {
     eventClick: async function(info) {
       const detail = info.event.extendedProps.description ? `\nKeterangan: ${info.event.extendedProps.description}` : "";
       if (confirm(`Agenda: ${info.event.title}${detail}\n\nHapus jadwal ini?`)) {
-        const rec = records.find(r => r.__backendId === info.event.id);
+        const rec = (window.records || []).find(r => r.__backendId === info.event.id);
         if (rec) await window.dataSdk.delete(rec);
       }
     }
@@ -852,6 +857,11 @@ function initCalendar() {
 // MAIN RENDER
 // ============================================================
 function render() {
+  // SINKRONISASI DATA DARI API.JS (Mencegah data tidak update)
+  if (window.records) window.appRecords = window.records; // Safety
+  if (window.masterSantri) window.appMasterSantri = window.masterSantri;
+  if (window.masterHalaqah) window.appMasterHalaqah = window.masterHalaqah;
+
   populateAllFilters();
   renderRoster();
   renderStats();
@@ -866,7 +876,6 @@ function render() {
   if (window.lucide) lucide.createIcons();
 }
 
-// Ekspos fungsi render ke window agar bisa dipanggil dari api.js
 window.render = render;
 
 // ============================================================
@@ -1245,7 +1254,7 @@ byId("profile-form").addEventListener("submit", async e => {
 // ============================================================
 byId("export-csv-btn").addEventListener("click", () => {
   const h = byId("riwayat-filter-halaqah").value, k = byId("riwayat-filter-kelas").value, n = byId("riwayat-filter-nama").value;
-  const allLogs = records.filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester");
+  const allLogs = (window.records || []).filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester");
   const filtered = allLogs.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k) && (!n || r.nama_santri === n))
     .sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
   const headers = ["Tanggal","Nama","Halaqah","Kelas","Tipe","Kategori","Kehadiran","Juz/Kelancaran","Surah/Tipe_Ujian","Ayat/Rata2","Baris/Tajwid","Status/Predikat","Evaluasi"];
@@ -1273,7 +1282,7 @@ byId("generate-report-btn").addEventListener("click", () => {
   const targetMurojaah = Number(byId("laporan-hafalan-saat-ini").value) || 1;
   const start = byId("laporan-start").value, end = byId("laporan-end").value;
   const student = studentList().find(s => s.nama === nama);
-  const all = records.filter(r => r.nama_santri === nama && (!start || dateKey(r.tanggal) >= start) && (!end || dateKey(r.tanggal) <= end));
+  const all = (window.records || []).filter(r => r.nama_santri === nama && (!start || dateKey(r.tanggal) >= start) && (!end || dateKey(r.tanggal) <= end));
   const hadir = all.filter(r => (r.kehadiran === "Hadir" || r.tipe === "setoran_kehadiran") && r.tipe !== "ujian_semester").length;
   const sakit = all.filter(r => r.kehadiran === "Sakit").length;
   const izin = all.filter(r => r.kehadiran === "Izin").length;
@@ -1481,16 +1490,11 @@ function init() {
   populateJuz();
   populateBaris();
   setupTipeSetoranToggle();
+  populateAllFilters();
   
-  // Inisialisasi SDK dengan callback yang benar
+  // Panggil API. Data akan otomatis memicu render() di api.js
   window.dataSdk.init({ 
     onDataChanged(data) { 
-      // Sinkronkan data dari api.js ke variabel lokal app.js
-      if (window.records) records = window.records;
-      if (window.masterSantri) masterSantri = window.masterSantri;
-      if (window.masterHalaqah) masterHalaqah = window.masterHalaqah;
-      
-      // Render UI
       render(); 
     } 
   });

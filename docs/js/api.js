@@ -1,12 +1,15 @@
 // ============================================================
-// API LAYER - DIRECT TO GOOGLE APPS SCRIPT (FINAL FIX)
+// API LAYER - DIRECT TO GOOGLE APPS SCRIPT (METODE GET)
 // ============================================================
 
 window.APP_CONFIG = {
   gasUrl: 'https://script.google.com/macros/s/AKfycbzd0nAN62cpSg2HAhVtrbKQEQYZ_-TXRl9ABTQTnqo1Rhs3FEVaciMLvikUdnKV0l_dLg/exec'
 };
 
-let _inflightGetAll = null;
+// Inisialisasi wadah data global
+window.records = [];
+window.masterSantri = [];
+window.masterHalaqah = [];
 
 async function gasCall(action, payload = {}) {
   try {
@@ -25,58 +28,47 @@ async function gasCall(action, payload = {}) {
   }
 }
 
-function fetchAll() {
-  if (_inflightGetAll) return _inflightGetAll;
-  _inflightGetAll = gasCall('getAll').finally(() => { _inflightGetAll = null; });
-  return _inflightGetAll;
-}
-
-// ============================================================
-// SDK
-// ============================================================
-window.dataSdk = {
-  init: async function (handler) {
-    try {
-      const data = await fetchAll();
-      
-      if (data.isOk) {
-        // Simpan ke window (untuk jaga-jaga)
-        window.records = data.records || [];
-        window.masterSantri = data.masterSantri || [];
-        window.masterHalaqah = data.masterHalaqah || [];
-
-        // 👇 INI YANG SAYA LUPA SEBELUMNYA 👇
-        // Panggil callback agar app.js menerima datanya
-        if (handler && typeof handler.onDataChanged === 'function') {
-          handler.onDataChanged(window.records);
-        }
-      }
-      return { isOk: true };
-    } catch (e) {
-      if (typeof window.showToast === 'function') window.showToast('Gagal memuat: ' + e.message, true);
-      return { isOk: false, message: e.message };
-    }
-  },
-  
-  create: (row) => gasCall('createRecord', row).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  update: (row) => gasCall('updateRecord', row).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  delete: (row) => gasCall('deleteRecord', row).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  bulkAttendance: (rows) => gasCall('processBulkAttendance', rows).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  createSantri: (d) => gasCall('createSantri', d).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  updateSantri: (d) => gasCall('updateSantri', d).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  deleteSantri: (d) => gasCall('deleteSantri', d).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  createHalaqah: (d) => gasCall('createHalaqah', d).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  updateHalaqah: (d) => gasCall('updateHalaqah', d).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  deleteHalaqah: (d) => gasCall('deleteHalaqah', d).then(r => { if (r.isOk) window.dataSdk.refresh(); return r; }),
-  
-  refresh: async () => {
-    const data = await fetchAll();
+// Fungsi utama mengambil data & langsung render
+async function syncData() {
+  try {
+    const data = await gasCall('getAll');
     if (data.isOk) {
       window.records = data.records || [];
       window.masterSantri = data.masterSantri || [];
       window.masterHalaqah = data.masterHalaqah || [];
-      if (typeof window.render === 'function') window.render();
+      
+      // Panggil fungsi render dari app.js
+      if (typeof window.render === 'function') {
+        window.render();
+      }
     }
+  } catch (e) {
+    console.error("Gagal sinkronisasi:", e);
+  }
+}
+
+window.dataSdk = {
+  init: async function () {
+    await syncData();
+    return { isOk: true };
   },
-  fetchAll
+  
+  // Setiap aksi akan memicu syncData() agar UI langsung berubah
+  create: (row) => gasCall('createRecord', row).then(r => { if (r.isOk) syncData(); return r; }),
+  update: (row) => gasCall('updateRecord', row).then(r => { if (r.isOk) syncData(); return r; }),
+  delete: (row) => gasCall('deleteRecord', row).then(r => { if (r.isOk) syncData(); return r; }),
+  bulkAttendance: (rows) => gasCall('processBulkAttendance', rows).then(r => { if (r.isOk) syncData(); return r; }),
+  
+  createSantri: (d) => gasCall('createSantri', d).then(r => { if (r.isOk) syncData(); return r; }),
+  updateSantri: (d) => gasCall('updateSantri', d).then(r => { if (r.isOk) syncData(); return r; }),
+  deleteSantri: (d) => gasCall('deleteSantri', d).then(r => { if (r.isOk) syncData(); return r; }),
+  
+  createHalaqah: (d) => gasCall('createHalaqah', d).then(r => { if (r.isOk) syncData(); return r; }),
+  updateHalaqah: (d) => gasCall('updateHalaqah', d).then(r => { if (r.isOk) syncData(); return r; }),
+  deleteHalaqah: (d) => gasCall('deleteHalaqah', d).then(r => { if (r.isOk) syncData(); return r; }),
+  
+  mutateSantriBulk: (items) => gasCall('mutateSantriBulk', { items }).then(r => { if (r.isOk) syncData(); return r; }),
+  
+  refresh: () => syncData(),
+  fetchAll: () => gasCall('getAll')
 };
