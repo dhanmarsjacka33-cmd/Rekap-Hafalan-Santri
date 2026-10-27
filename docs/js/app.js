@@ -141,8 +141,8 @@ function applyRole() {
     
     setTimeout(() => {
       const selH = byId("f-halaqah");
-      selH.value = window.currentUser.halaqah;
-      selH.disabled = true;
+      if(selH) selH.value = window.currentUser.halaqah;
+      if(selH) selH.disabled = true;
       renderAll();
     }, 500);
   }
@@ -220,6 +220,15 @@ function switchRaporTab(tab) {
   });
   if (tab === 'lap-3') { populateAdminFilters(); renderAdminStudents(); renderAdminClasses(); }
   if (tab === 'lap-4') { renderAuditLog(); }
+}
+
+// FILTER GLOBAL
+if (byId('toggle-filter-btn')) {
+  byId('toggle-filter-btn').addEventListener('click', () => {
+    const body = byId('filter-body'), chev = byId('filter-chevron');
+    if(body) body.classList.toggle('hidden');
+    if(chev) chev.style.transform = body.classList.contains('hidden') ? 'rotate(180deg)' : 'rotate(0deg)';
+  });
 }
 
 function populateAllFilters() { 
@@ -597,7 +606,6 @@ if (byId("profile-form")) byId("profile-form").addEventListener("submit", async 
   submit.disabled = false; if (result.isOk) { closeProfileModal(); showToast("Tersimpan"); } else { error.textContent = "Gagal menyimpan."; error.classList.remove("hidden"); }
 });
 
-// EXPORT & PRINT
 if (byId("export-csv-btn")) byId("export-csv-btn").addEventListener("click", () => {
   const h = byId("riwayat-filter-halaqah").value, k = byId("riwayat-filter-kelas").value, n = byId("riwayat-filter-nama").value; const allLogs = (window.records || []).filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester"); const filtered = allLogs.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k) && (!n || r.nama_santri === n)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
   const headers = ["Tanggal","Nama","Halaqah","Kelas","Tipe","Kategori","Kehadiran","Juz/Kelancaran","Surah/Tipe_Ujian","Ayat/Rata2","Baris/Tajwid","Status/Predikat","Evaluasi"];
