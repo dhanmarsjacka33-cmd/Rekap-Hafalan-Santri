@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rekap Hafalan Santri</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1f6f54">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -80,7 +82,33 @@
   </style>
 </head>
 <body class="pb-24 md:pb-0 bg-[#f7f5f0]">
-<div id="main-ui" class="bg-[#f7f5f0] min-h-screen">
+
+<!-- LOGIN UI -->
+<div id="login-ui" class="fixed inset-0 bg-[#1c2821] z-[200] flex items-center justify-center hidden">
+  <div class="canva-card p-8 rounded-2xl shadow-2xl w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="bg-emerald-100 text-emerald-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="lock" style="width:32px;height:32px"></i>
+      </div>
+      <h2 class="text-2xl font-bold">Login Sistem</h2>
+      <p class="text-stone-500 text-sm">Rekap Hafalan Santri</p>
+    </div>
+    <form id="login-form">
+      <div class="mb-3">
+        <label class="block text-sm font-semibold mb-1">Username</label>
+        <input type="text" id="login-user" class="field-input text-center" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-semibold mb-1">PIN</label>
+        <input type="password" id="login-pin" class="field-input text-center tracking-widest text-lg" required>
+      </div>
+      <p id="login-error" class="text-red-600 text-xs text-center mb-3 hidden"></p>
+      <button type="submit" id="login-submit" class="btn-main w-full">Masuk</button>
+    </form>
+  </div>
+</div>
+
+<div id="main-ui" class="bg-[#f7f5f0] min-h-screen hidden">
 <div class="w-full min-h-screen pb-10">
   <header class="relative w-full bg-[#1c2821] text-white py-6 px-6">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -88,18 +116,27 @@
         <p class="text-[10px] tracking-[.2em] font-bold uppercase mb-1.5 text-[#a3d9c9]">MANAJEMEN HAFALAN</p>
         <h1 class="text-3xl font-bold">Rekap Hafalan Santri</h1>
       </div>
-      <nav class="desktop-nav flex gap-2 p-1.5 bg-[#26372d] rounded-xl shadow-inner overflow-x-auto">
-        <button id="nav-dashboard" class="nav-btn bg-white shadow-sm text-[#1f6f54] font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="layout-dashboard" style="width:16px;height:16px"></i> Dashboard</button>
-        <button id="nav-input" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="edit-3" style="width:16px;height:16px"></i> Input Data</button>
-        <button id="nav-laporan" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="folder-open" style="width:16px;height:16px"></i> Mutasi & Rapor</button>
-        <button id="nav-agenda" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="calendar" style="width:16px;height:16px"></i> Kalender</button>
-      </nav>
+      <div class="flex flex-col md:flex-row items-center gap-4">
+        <div class="hidden md:flex items-center gap-3 bg-[#26372d] px-4 py-2 rounded-xl">
+          <i data-lucide="user-circle" class="text-[#a3d9c9]"></i>
+          <div>
+            <p id="user-name-display" class="text-sm font-bold leading-tight"></p>
+            <p id="user-role-display" class="text-[10px] text-stone-400 uppercase tracking-wide"></p>
+          </div>
+          <button id="logout-btn" class="ml-2 text-stone-400 hover:text-rose-400 transition-colors" title="Logout"><i data-lucide="log-out" style="width:18px;height:18px"></i></button>
+        </div>
+        <nav class="desktop-nav flex gap-2 p-1.5 bg-[#26372d] rounded-xl shadow-inner overflow-x-auto">
+          <button id="nav-dashboard" class="nav-btn bg-white shadow-sm text-[#1f6f54] font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="layout-dashboard" style="width:16px;height:16px"></i> Dashboard</button>
+          <button id="nav-input" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="edit-3" style="width:16px;height:16px"></i> Input Data</button>
+          <button id="nav-laporan" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="folder-open" style="width:16px;height:16px"></i> Mutasi & Rapor</button>
+          <button id="nav-agenda" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="calendar" style="width:16px;height:16px"></i> Kalender</button>
+        </nav>
+      </div>
     </div>
   </header>
 
   <main class="w-full max-w-7xl mx-auto px-4 md:px-6 py-7">
     
-    <!-- Filter Global (Collapsible) -->
     <section class="canva-card rounded-2xl shadow-sm mb-6 transition-all duration-300">
       <button id="toggle-filter-btn" class="w-full flex items-center justify-between p-4 font-bold text-lg text-stone-800 hover:bg-stone-50 rounded-2xl">
         <div class="flex items-center gap-2 text-[#1f6f54]">
@@ -128,7 +165,6 @@
 
     <!-- VIEW: DASHBOARD -->
     <div id="view-dashboard" class="space-y-6 soft-enter block">
-      <!-- Dashboard Tabs -->
       <div class="flex justify-center mb-4">
         <div class="bg-stone-200 p-1 rounded-xl flex gap-1">
           <button id="tab-dash-ringkasan" class="px-6 py-2 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all" onclick="switchDashTab('ringkasan')">Ringkasan</button>
@@ -136,7 +172,6 @@
         </div>
       </div>
 
-      <!-- Tab Content: Ringkasan -->
       <div id="dash-ringkasan" class="space-y-6">
         <section class="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div class="lg:col-span-1 grid grid-cols-2 lg:grid-cols-1 gap-3">
@@ -149,7 +184,7 @@
               <p id="stat-hadir" class="text-3xl font-bold text-[#20744e]">0</p>
             </article>
             <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col justify-center text-center lg:col-span-1 col-span-2">
-              <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Total Setoran Ziyadah</p>
+              <p class="text-[11px] text-stone-500 uppercase font-bold tracking-wide mb-1">Total Setoran</p>
               <p class="text-3xl font-bold text-[#1f6f54]"><span id="stat-baris">0</span> <span class="text-sm font-normal text-stone-400">baris</span></p>
             </article>
           </div>
@@ -166,11 +201,10 @@
         </section>
       </div>
 
-      <!-- Tab Content: Analitik -->
       <div id="dash-analitik" class="space-y-6 hidden">
         <section class="canva-card rounded-2xl p-5 shadow-sm">
           <h2 class="text-xl font-bold">Grafik Perkembangan Hafalan (Baris)</h2>
-          <p class="text-stone-500 text-sm mt-1 mb-4">Tren penambahan ziyadah dan murojaah per hari.</p>
+          <p class="text-stone-500 text-sm mt-1 mb-4">Tren penambahan hafalan per hari.</p>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5 w-full xl:w-[50rem]">
             <div><label class="block text-xs font-semibold mb-1">Mulai Tgl</label><input type="date" id="prog-start" class="field-input text-xs !py-2"></div>
             <div><label class="block text-xs font-semibold mb-1">Sampai Tgl</label><input type="date" id="prog-end" class="field-input text-xs !py-2"></div>
@@ -221,7 +255,6 @@
     <!-- VIEW: INPUT DATA -->
     <div id="view-input" class="space-y-6 hidden soft-enter pb-24">
       
-      <!-- Header Mode Toggle -->
       <div class="flex justify-end gap-2 mb-2">
         <button id="mode-roster-btn" class="btn-outline px-4 py-2 text-sm flex items-center gap-2 text-stone-600 bg-white">
           <i data-lucide="list" style="width:16px;height:16px"></i> Mode Roster
@@ -231,7 +264,7 @@
         </button>
       </div>
 
-      <!-- MODE ROSTER (Tabel Lama) -->
+      <!-- MODE ROSTER -->
       <div id="roster-mode-container" class="hidden">
         <section class="canva-card rounded-2xl p-5 shadow-sm">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2 cursor-pointer hover:bg-stone-50 p-2 -mx-2 rounded-lg transition-colors" onclick="document.getElementById('input-roster-body').classList.toggle('hidden'); document.getElementById('icon-col-roster').classList.toggle('rotate-180');">
@@ -272,9 +305,8 @@
         </section>
       </div>
 
-      <!-- MODE CEPAT (Card Inline) -->
+      <!-- MODE CEPAT -->
       <div id="fast-mode-container" class="space-y-4 hidden">
-        <!-- Header Sticky (Search & Filter) -->
         <div class="sticky top-0 z-30 bg-[#f7f5f0] pt-2 pb-3 -mx-4 px-4 border-b border-stone-200 shadow-sm">
           <div class="flex items-center gap-2 mb-2">
             <div class="relative flex-1">
@@ -305,13 +337,10 @@
           </div>
         </div>
 
-        <!-- List Santri -->
-        <div id="list-input-cepat" class="space-y-3">
-          <!-- Render via JS -->
-        </div>
+        <div id="list-input-cepat" class="space-y-3"></div>
       </div>
 
-      <!-- PANEL SETORAN (TETAP ADA) -->
+      <!-- PANEL SETORAN -->
       <section id="setoran-panel" class="canva-card hidden rounded-2xl p-5 shadow-sm soft-enter border-t-4 border-t-[#377c6b]">
         <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
           <div>
@@ -325,7 +354,14 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div><label class="block text-sm font-semibold mb-1" for="f-tanggal-setoran">Tanggal</label><input type="date" id="f-tanggal-setoran" class="field-input text-[#1f6f54] font-bold" required></div>
             <div><label class="block text-sm font-semibold mb-1" for="f-tipe-setoran">Tipe Modul</label><select id="f-tipe-setoran" class="field-input"><option value="Al-Quran">Al-Qur'an</option><option value="Iqra">Iqra</option></select></div>
-            <div id="kat-quran-wrapper"><label class="block text-sm font-semibold mb-1" for="f-kategori-quran">Kategori Setoran</label><select id="f-kategori-quran" class="field-input"><option value="Ziyadah">Ziyadah (Hafalan Baru)</option><option value="Murojaah">Murojaah (Pengulangan)</option></select></div>
+            <div id="kat-quran-wrapper">
+              <label class="block text-sm font-semibold mb-1" for="f-kategori-quran">Kategori Setoran</label>
+              <select id="f-kategori-quran" class="field-input">
+                <option value="Sabaq">Sabaq (Hafalan Baru)</option>
+                <option value="Sabqi">Sabqi (Mengulang Baru)</option>
+                <option value="Manzil">Manzil (Mengulang Lama)</option>
+              </select>
+            </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div id="juz-wrapper"><label class="block text-sm font-semibold mb-1" for="f-juz">Juz</label><select id="f-juz" class="field-input"></select></div>
@@ -360,7 +396,7 @@
         </div>
       </section>
 
-      <!-- PANEL UJIAN (TETAP ADA) -->
+      <!-- PANEL UJIAN -->
       <section id="ujian-panel" class="canva-card hidden rounded-2xl p-5 shadow-sm soft-enter border-t-4 border-t-amber-500 bg-amber-50/30">
         <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
           <div>
@@ -395,15 +431,15 @@
 
     </div>
 
-    <!-- VIEW: LAPORAN (DIJADIKAN TAB) -->
+    <!-- VIEW: LAPORAN -->
     <div id="view-laporan" class="space-y-6 hidden soft-enter pb-24">
       
-      <!-- Tab Menu Halaman Laporan -->
       <div class="flex justify-center mb-4 overflow-x-auto">
         <div class="bg-stone-200 p-1 rounded-xl flex gap-1 whitespace-nowrap">
           <button id="tab-lap-1" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all" onclick="switchRaporTab('lap-1')">Rekap & Rapor</button>
           <button id="tab-lap-2" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-2')">Log & Mutasi</button>
           <button id="tab-lap-3" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-3')">Manajemen Data</button>
+          <button id="tab-lap-4" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-4')">Audit Log</button>
         </div>
       </div>
 
@@ -438,8 +474,9 @@
                     <th class="text-center px-2 py-2 font-semibold border-r border-[#e4dccb] text-amber-700">I</th>
                     <th class="text-center px-2 py-2 font-semibold border-r border-[#e4dccb] text-rose-700">S</th>
                     <th class="text-center px-2 py-2 font-semibold border-r border-[#e4dccb] text-pink-700">A</th>
-                    <th class="text-center px-4 py-2 font-semibold border-r border-[#e4dccb]">Ziyadah</th>
-                    <th class="text-center px-4 py-2 font-semibold">Murojaah</th>
+                    <th class="text-center px-4 py-2 font-semibold border-r border-[#e4dccb]">Sabaq</th>
+                    <th class="text-center px-4 py-2 font-semibold border-r border-[#e4dccb]">Sabqi</th>
+                    <th class="text-center px-4 py-2 font-semibold">Manzil</th>
                   </tr>
                 </thead>
                 <tbody id="rekap-grid-list"></tbody>
@@ -459,7 +496,7 @@
             <div><label class="mb-1 block text-xs font-bold" for="laporan-halaqah">Halaqah</label><select id="laporan-halaqah" class="field-input filter-select"></select></div>
             <div><label class="mb-1 block text-xs font-bold" for="laporan-kelas">Kelas</label><select id="laporan-kelas" class="field-input filter-select"></select></div>
             <div class="lg:col-span-2"><label class="mb-1 block text-xs font-bold" for="laporan-siswa">Nama Santri</label><select id="laporan-siswa" class="field-input filter-select"></select></div>
-            <div><label class="mb-1 block text-xs font-bold" for="laporan-target">Target Ziyadah (Juz)</label><input id="laporan-target" type="number" min="1" value="1" class="field-input text-xs"></div>
+            <div><label class="mb-1 block text-xs font-bold" for="laporan-target">Target Sabaq (Juz)</label><input id="laporan-target" type="number" min="1" value="1" class="field-input text-xs"></div>
             <div><label class="mb-1 block text-xs font-bold text-indigo-700" for="laporan-hafalan-saat-ini">Hafalan Saat Ini (Juz)</label><input id="laporan-hafalan-saat-ini" type="number" min="1" value="1" class="field-input text-xs border-indigo-200"></div>
           </div>
           <div class="grid grid-cols-2 gap-3 sm:w-1/2 mb-5">
@@ -512,7 +549,7 @@
                       <div class="canva-card rounded-xl p-5 h-[calc(100%-32px)] flex flex-col justify-center bg-white border-[#d8e5dd] gap-5">
                         <div>
                           <div class="flex justify-between items-end mb-2">
-                            <p class="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Target Ziyadah <span id="rpt-target-text" class="text-stone-800">1 Juz</span></p>
+                            <p class="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Target Sabaq <span id="rpt-target-text" class="text-stone-800">1 Juz</span></p>
                             <p id="rpt-progress-text" class="text-lg font-bold text-[#1f6f54]">0%</p>
                           </div>
                           <div class="w-full bg-stone-100 rounded-full h-2.5 border border-stone-200 overflow-hidden">
@@ -522,7 +559,7 @@
                         </div>
                         <div>
                           <div class="flex justify-between items-end mb-2">
-                            <p class="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Target Murojaah <span id="rpt-murojaah-target-text" class="text-stone-800">1 Juz</span></p>
+                            <p class="text-[10px] font-bold text-stone-500 uppercase tracking-wide">Target Sabqi <span id="rpt-murojaah-target-text" class="text-stone-800">1 Juz</span></p>
                             <p id="rpt-murojaah-progress-text" class="text-lg font-bold text-indigo-700">0%</p>
                           </div>
                           <div class="w-full bg-stone-100 rounded-full h-2.5 border border-stone-200 overflow-hidden">
@@ -677,27 +714,22 @@
           <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
             <div>
               <h2 class="text-xl font-bold">Manajemen Santri</h2>
-              <p class="text-stone-500 text-sm mt-1">Daftar seluruh santri aktif. Anda dapat mengedit atau menghapus santri.</p>
+              <p class="text-stone-500 text-sm mt-1">Daftar seluruh santri aktif.</p>
             </div>
-            <button id="add-student-admin" type="button" class="canva-button rounded-lg px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center">
-              <i data-lucide="user-plus" style="width:17px;height:17px"></i> Tambah Santri Baru
-            </button>
+            <div class="flex gap-2">
+              <button id="import-csv-btn" type="button" class="btn-outline px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center text-emerald-700 border-emerald-200">
+                <i data-lucide="file-spreadsheet" style="width:17px;height:17px"></i> Import CSV
+              </button>
+              <button id="add-student-admin" type="button" class="canva-button rounded-lg px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center">
+                <i data-lucide="user-plus" style="width:17px;height:17px"></i> Tambah Santri
+              </button>
+            </div>
           </div>
           
-          <!-- FILTER MANAJEMEN SANTRI -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-            <div>
-              <label class="block text-xs font-semibold mb-1">Cari Nama</label>
-              <input type="text" id="admin-search-student" class="field-input text-sm" placeholder="Cari santri...">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1">Halaqah</label>
-              <select id="admin-filter-halaqah" class="field-input filter-select text-sm"></select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1">Kelas</label>
-              <select id="admin-filter-kelas" class="field-input filter-select text-sm"></select>
-            </div>
+            <div><label class="block text-xs font-semibold mb-1">Cari Nama</label><input type="text" id="admin-search-student" class="field-input text-sm" placeholder="Cari santri..."></div>
+            <div><label class="block text-xs font-semibold mb-1">Halaqah</label><select id="admin-filter-halaqah" class="field-input filter-select text-sm"></select></div>
+            <div><label class="block text-xs font-semibold mb-1">Kelas</label><select id="admin-filter-kelas" class="field-input filter-select text-sm"></select></div>
           </div>
 
           <div class="overflow-x-auto rounded-xl border border-[#e4dccb]">
@@ -730,7 +762,7 @@
           <div id="admin-class-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
         </section>
 
-        <!-- Manajemen Halaqah & Pengampu -->
+        <!-- Manajemen Halaqah -->
         <section class="canva-card rounded-2xl p-5 shadow-sm">
           <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
             <div>
@@ -750,6 +782,29 @@
             </div>
           </div>
           <div id="teacher-list" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+        </section>
+      </div>
+
+      <!-- TAB 4: AUDIT LOG -->
+      <div id="lap-4" class="space-y-6 hidden">
+        <section class="canva-card rounded-2xl p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Audit Log</h2>
+            <button id="refresh-audit-btn" class="btn-outline text-xs px-3 py-1.5"><i data-lucide="refresh-cw" class="inline" style="width:14px;height:14px"></i> Refresh</button>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-[#e4dccb] max-h-[600px]">
+            <table class="w-full min-w-[640px] text-sm text-left">
+              <thead class="bg-stone-100 text-stone-700 sticky top-0 z-10">
+                <tr>
+                  <th class="px-4 py-2 font-semibold border-b w-32">Waktu</th>
+                  <th class="px-4 py-2 font-semibold border-b w-32">User</th>
+                  <th class="px-4 py-2 font-semibold border-b w-40">Aksi</th>
+                  <th class="px-4 py-2 font-semibold border-b">Detail</th>
+                </tr>
+              </thead>
+              <tbody id="audit-log-list" class="bg-white"></tbody>
+            </table>
+          </div>
         </section>
       </div>
 
@@ -892,6 +947,30 @@
       <div><label class="block text-sm font-semibold mb-1">Nama Kelas</label><input id="kelas-name" type="text" class="field-input" placeholder="Misal: 7.1" required></div>
       <p id="kelas-error" class="hidden text-sm text-red-700 rounded-lg bg-red-50 px-3 py-2"></p>
       <button id="kelas-submit" type="submit" class="canva-button w-full rounded-lg py-3 font-semibold mt-2">Simpan</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Import CSV -->
+<div id="import-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
+  <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl modal-content">
+    <div class="flex items-start justify-between gap-3 mb-5">
+      <div><p class="text-xs uppercase tracking-[.14em] font-bold text-emerald-600">IMPORT DATA</p><h2 class="text-xl font-semibold mt-1">Import Santri (CSV)</h2></div>
+      <button id="close-import-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+      <p class="text-xs text-blue-800 leading-relaxed">
+        Format CSV harus memiliki urutan kolom: <strong>Nama, Kelas, Halaqah</strong>. <br>
+        (Pisahkan dengan koma. Baris pertama adalah header, akan diabaikan).
+      </p>
+    </div>
+    <form id="import-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-semibold mb-1">Pilih File CSV</label>
+        <input type="file" id="csv-file" accept=".csv" class="field-input bg-white" required>
+      </div>
+      <p id="import-error" class="hidden text-sm text-red-700 rounded-lg bg-red-50 px-3 py-2"></p>
+      <button id="import-submit" type="submit" class="canva-button w-full rounded-lg py-3 font-semibold mt-2">Mulai Import</button>
     </form>
   </div>
 </div>

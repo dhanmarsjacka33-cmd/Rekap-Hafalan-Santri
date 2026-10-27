@@ -3,6 +3,11 @@ async function gasCall(action, payload = {}, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  // Sisipkan user otomatis
+  if (window.currentUser) {
+      payload.user = window.currentUser.username;
+  }
+
   try {
     if (window.DEBUG) console.log('[gasCall]', action, payload);
     
@@ -37,6 +42,7 @@ async function gasCall(action, payload = {}, options = {}) {
 }
 
 window.dataSdk = {
+  login: (username, pin) => gasCall('login', { username, pin }),
   init: async function(handler) {
     try {
       const data = await gasCall('getAll');
@@ -53,11 +59,13 @@ window.dataSdk = {
       return { isOk: false, message: e.message };
     }
   },
+  getAuditLogs: () => gasCall('getAuditLogs'),
   create: (row, skipRefresh = false) => gasCall('createRecord', row).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),
   update: (row, skipRefresh = false) => gasCall('updateRecord', row).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),
   delete: (row, skipRefresh = false) => gasCall('deleteRecord', row).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),
   bulkAttendance: (rows, skipRefresh = false) => gasCall('processBulkAttendance', rows).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),
   createSantri: (d) => gasCall('createSantri', d).then(r => { if (r.isOk) refreshData(); return r; }),
+  bulkCreateSantri: (d) => gasCall('bulkCreateSantri', d).then(r => { if (r.isOk) refreshData(); return r; }),
   updateSantri: (d) => gasCall('updateSantri', d).then(r => { if (r.isOk) refreshData(); return r; }),
   deleteSantri: (d) => gasCall('deleteSantri', d).then(r => { if (r.isOk) refreshData(); return r; }),
   createHalaqah: (d) => gasCall('createHalaqah', d).then(r => { if (r.isOk) refreshData(); return r; }),
