@@ -3,14 +3,9 @@ async function gasCall(action, payload = {}, options = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  // Sisipkan user otomatis
-  if (window.currentUser) {
-      payload.user = window.currentUser.username;
-  }
+  if (window.currentUser) payload.user = window.currentUser.username;
 
   try {
-    if (window.DEBUG) console.log('[gasCall]', action, payload);
-    
     const formData = new URLSearchParams();
     formData.append('action', action);
     formData.append('payload', JSON.stringify(payload));
@@ -27,7 +22,6 @@ async function gasCall(action, payload = {}, options = {}) {
     const text = await res.text();
     try {
       const json = JSON.parse(text);
-      if (window.DEBUG) console.log('[gasCall] result', json);
       return json;
     } catch (e) {
       const match = text.match(/\{[\s\S]*\}/);
@@ -60,6 +54,10 @@ window.dataSdk = {
     }
   },
   getAuditLogs: () => gasCall('getAuditLogs'),
+  getUsers: () => gasCall('getUsers'),
+  createUser: (d) => gasCall('createUser', d).then(r => { if (r.isOk) refreshData(); return r; }),
+  updateUser: (d) => gasCall('updateUser', d).then(r => { if (r.isOk) refreshData(); return r; }),
+  deleteUser: (d) => gasCall('deleteUser', d).then(r => { if (r.isOk) refreshData(); return r; }),
   create: (row, skipRefresh = false) => gasCall('createRecord', row).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),
   update: (row, skipRefresh = false) => gasCall('updateRecord', row).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),
   delete: (row, skipRefresh = false) => gasCall('deleteRecord', row).then(r => { if (r.isOk && !skipRefresh) refreshData(); return r; }),

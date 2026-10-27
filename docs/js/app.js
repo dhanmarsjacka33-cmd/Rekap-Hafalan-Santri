@@ -218,7 +218,7 @@ function switchRaporTab(tab) {
       else btn.className = "px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
     }
   });
-  if (tab === 'lap-3') { populateAdminFilters(); renderAdminStudents(); renderAdminClasses(); }
+  if (tab === 'lap-3') { populateAdminFilters(); renderAdminStudents(); renderAdminClasses(); renderAdminUsers(); }
   if (tab === 'lap-4') { renderAuditLog(); }
 }
 
@@ -319,7 +319,7 @@ async function renderCharts(hadir, sakit, izin, alfa, lancar, perbaikan, diulang
   const ctxSet = byId('setoranChart'); 
   if (ctxSet) {
     if (setoranChart) setoranChart.destroy();
-    setoranChart = new Chart(ctxSet, { type: 'bar', data: { labels: ['Sabaq','Sabqi','Manzil'], datasets: [{ label: 'Jumlah', data: [lancar, perbaikan, diulang], backgroundColor: ['#1f6f54','#f59e0b','#ef4444'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x:{grid:{display:false}}, y:{beginAtZero:true, ticks:{stepSize:1}} } } });
+    setoranChart = new Chart(ctxSet, { type: 'bar', data: { labels: ['Lancar','Perbaikan','Diulang'], datasets: [{ label: 'Jumlah', data: [lancar, perbaikan, diulang], backgroundColor: ['#1f6f54','#f59e0b','#ef4444'], borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x:{grid:{display:false}}, y:{beginAtZero:true, ticks:{stepSize:1}} } } });
   }
   const ctxUjian = byId('ujianChart'); 
   if (ctxUjian) {
@@ -357,9 +357,9 @@ function renderProgressionChart() {
     data: { 
       labels, 
       datasets: [ 
-        { label: 'Sabaq (Baris)', data: sabaqData, borderColor: '#1f6f54', backgroundColor: 'rgba(31,111,84,0.1)', fill: true, tension: 0.3 },
-        { label: 'Sabqi (Baris)', data: sabqiData, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', fill: true, tension: 0.3 },
-        { label: 'Manzil (Baris)', data: manzilData, borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,0.1)', fill: true, tension: 0.3 }
+        { label: 'Sabaq (Baru)', data: sabaqData, borderColor: '#1f6f54', backgroundColor: 'rgba(31,111,84,0.1)', fill: true, tension: 0.3 },
+        { label: 'Sabqi (Mengulang)', data: sabqiData, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', fill: true, tension: 0.3 },
+        { label: 'Manzil (Lama)', data: manzilData, borderColor: '#4f46e5', backgroundColor: 'rgba(79,70,229,0.1)', fill: true, tension: 0.3 }
       ] 
     }, 
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } } 
@@ -445,6 +445,28 @@ function renderAdminClasses() {
         </div>
     `).join('');
 }
+function renderAdminUsers() {
+    const list = byId("admin-user-list"); if (!list) return;
+    list.innerHTML = '<tr><td colspan="6" class="text-center py-4">Memuat data user...</td></tr>';
+    window.dataSdk.getUsers().then(res => {
+        if (res.isOk) {
+            list.innerHTML = res.users.map((u, i) => `
+                <tr class="border-b border-[#e4dccb] hover:bg-[#fcfaf5]">
+                    <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${i+1}</td>
+                    <td class="px-4 py-2 border-r border-[#e4dccb] font-semibold">${esc(u.username)}</td>
+                    <td class="px-3 py-2 text-center border-r border-[#e4dccb]">****</td>
+                    <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${esc(u.role)}</td>
+                    <td class="px-3 py-2 text-center border-r border-[#e4dccb]">${esc(u.halaqah)}</td>
+                    <td class="px-4 py-2 text-right">
+                        <button class="text-emerald-600 hover:text-emerald-800 font-bold text-xs" onclick="openUserModal('${esc(u.username)}', '${esc(u.role)}', '${esc(u.halaqah)}')">Edit</button>
+                        <button class="text-rose-600 hover:text-rose-800 font-bold text-xs ml-2" onclick="deleteUserAdmin('${esc(u.username)}', this)">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+            if (res.users.length === 0) list.innerHTML = '<tr><td colspan="6" class="text-center py-4">Belum ada akun.</td></tr>';
+        }
+    }).catch(e => { list.innerHTML = '<tr><td colspan="6" class="text-center text-rose-500 py-4">Gagal memuat data.</td></tr>'; });
+}
 
 async function renderAuditLog() {
     const list = byId("audit-log-list"); if (!list) return;
@@ -471,7 +493,7 @@ function renderAll() {
   populateAllFilters(); renderStats(); renderProgressionChart(); renderLeaderboard(); renderHistory(); renderTeachers(); renderMutasi(); renderRekapBulanan(); renderRekapUjianGlobal(); initCalendar(); 
   if (window.lucide) lucide.createIcons();
   if (typeof window.renderRoster === 'function') window.renderRoster();
-  if (byId("lap-3") && !byId("lap-3").classList.contains("hidden")) { populateAdminFilters(); renderAdminStudents(); renderAdminClasses(); }
+  if (byId("lap-3") && !byId("lap-3").classList.contains("hidden")) { populateAdminFilters(); renderAdminStudents(); renderAdminClasses(); renderAdminUsers(); }
 }
 window.render = renderAll;
 
@@ -517,6 +539,59 @@ if (byId("kelas-form")) byId("kelas-form").addEventListener("submit", async e =>
     else result = await window.dataSdk.createKelas({ nama: newName, user: window.currentUser.username });
     btn.disabled = false;
     if (result.isOk) { byId("kelas-modal").classList.add("hidden"); e.target.reset(); showToast("Data kelas disimpan"); } 
+    else { err.textContent = result.message || "Gagal menyimpan"; err.classList.remove("hidden"); }
+});
+
+window.openUserModal = function(userLama = null, role = 'Guru', halaqah = '') {
+    byId("user-modal").classList.remove("hidden");
+    byId("user-modal-title").textContent = userLama ? "Edit Akun" : "Tambah Akun";
+    byId("user-old-username").value = userLama || "";
+    byId("user-username").value = userLama || "";
+    byId("user-pin").value = "";
+    byId("user-role").value = role;
+    
+    const selH = byId("user-halaqah");
+    clearSelect(selH, "Semua Halaqah");
+    halaqahList().forEach(h => option(selH, h.nama, h.nama));
+    option(selH, "Semua", "Semua");
+    if ([...selH.options].some(o => o.value === halaqah)) selH.value = halaqah;
+    
+    byId("user-error").classList.add("hidden");
+    byId("user-username").focus();
+};
+
+window.deleteUserAdmin = async function(username, btn) {
+    if (!confirm(`Yakin ingin menghapus akun "${username}"?`)) return;
+    btn.disabled = true;
+    try {
+        const res = await window.dataSdk.deleteUser({ username, user: window.currentUser.username });
+        if (res.isOk) showToast("Akun dihapus"); else alert(res.message || "Gagal menghapus");
+    } catch(e) { alert("Gagal menghapus"); }
+    finally { btn.disabled = false; }
+};
+
+if (byId("add-user-admin")) byId("add-user-admin").addEventListener("click", () => window.openUserModal());
+if (byId("close-user-modal")) byId("close-user-modal").addEventListener("click", () => { byId("user-modal").classList.add("hidden"); byId("user-form").reset(); });
+
+if (byId("user-form")) byId("user-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const oldUsername = byId("user-old-username").value;
+    const username = byId("user-username").value.trim();
+    const pin = byId("user-pin").value.trim();
+    const role = byId("user-role").value;
+    const halaqah = byId("user-halaqah").value;
+    const btn = byId("user-submit");
+    const err = byId("user-error");
+    
+    if (!username || !pin) { err.textContent = "Username dan PIN wajib diisi."; err.classList.remove("hidden"); return; }
+    btn.disabled = true; err.classList.add("hidden");
+    
+    let result;
+    if (oldUsername) result = await window.dataSdk.updateUser({ oldUsername, username, pin, role, halaqah, user: window.currentUser.username });
+    else result = await window.dataSdk.createUser({ username, pin, role, halaqah, user: window.currentUser.username });
+    
+    btn.disabled = false;
+    if (result.isOk) { byId("user-modal").classList.add("hidden"); e.target.reset(); showToast("Akun disimpan"); } 
     else { err.textContent = result.message || "Gagal menyimpan"; err.classList.remove("hidden"); }
 });
 
@@ -595,8 +670,13 @@ if (byId("mutasi-siswa")) byId("mutasi-siswa").addEventListener("change", (e) =>
 if (byId("mutasi-tujuan-halaqah")) byId("mutasi-tujuan-halaqah").addEventListener("change", (e) => { const hData = halaqahList().find(h => h.nama === e.target.value); byId("mutasi-tujuan-guru").value = hData ? hData.guru : "-"; });
 if (byId("mutasi-form")) byId("mutasi-form").addEventListener("submit", async e => {
   e.preventDefault(); const btn = byId("mutasi-submit"); btn.disabled = true; const error = byId("mutasi-error"); error.classList.add("hidden"); const namaSantri = byId("mutasi-siswa").value; const student = studentList().find(s => s.nama === namaSantri); if (!student) { error.textContent = "Santri tidak ditemukan."; error.classList.remove("hidden"); btn.disabled = false; return; }
-  const targetHalaqah = byId("mutasi-tujuan-halaqah").value; const targetGuru = byId("mutasi-tujuan-guru").value; const updRes = await window.dataSdk.updateSantri({ id: student.id, nama: student.nama, kelas: student.kelas, halaqah: targetHalaqah, foto: student.foto, status: 'Aktif', user: window.currentUser.username });
-  await window.dataSdk.create({ nama_santri: student.nama, kelas: student.kelas, halaqah: student.halaqah, evaluasi: targetGuru, juz: targetHalaqah, surah: targetGuru, tanggal: getIsoForDate(byId("mutasi-tanggal").value), ayat: "", jumlah_baris: 0, status: "", tipe: "mutasi_tahfidz", kehadiran: "", user: window.currentUser.username }); btn.disabled = false;
+  const originHalaqah = student.halaqah;
+  const originGuru = halaqahList().find(h => h.nama === originHalaqah)?.guru || "-";
+  const targetHalaqah = byId("mutasi-tujuan-halaqah").value; 
+  const targetGuru = byId("mutasi-tujuan-guru").value; 
+  
+  const updRes = await window.dataSdk.updateSantri({ id: student.id, nama: student.nama, kelas: student.kelas, halaqah: targetHalaqah, foto: student.foto, status: 'Aktif', user: window.currentUser.username });
+  await window.dataSdk.create({ nama_santri: student.nama, kelas: student.kelas, halaqah: originHalaqah, evaluasi: originGuru, juz: targetHalaqah, surah: targetGuru, tanggal: getIsoForDate(byId("mutasi-tanggal").value), ayat: "", jumlah_baris: 0, status: "", tipe: "mutasi_tahfidz", kehadiran: "", user: window.currentUser.username }); btn.disabled = false;
   if (updRes.isOk) { byId("mutasi-modal").classList.add("hidden"); e.target.reset(); showToast("Mutasi berhasil"); } else { error.textContent = "Gagal memproses."; error.classList.remove("hidden"); }
 });
 

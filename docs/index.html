@@ -2,10 +2,16 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Rekap Hafalan Santri</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1f6f54">
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="RHS App">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2232/2232688.png">
+  
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -13,7 +19,12 @@
   <style>
     :root { --forest:#1f6f54; --paper:#fffdf8; --ink:#2e2a20; --line:#d6cdb8; --teal:#377c6b; --muted:#668077; }
     * { box-sizing:border-box; }
-    body { margin:0; width:100%; font-family:"Work Sans",sans-serif; color:var(--ink); background:#f7f5f0; overflow-x: hidden; }
+    
+    body { margin:0; width:100%; font-family:"Work Sans",sans-serif; color:var(--ink); background:#f7f5f0; overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom); }
+    
+    /* Mencegah iOS auto-zoom saat input */
+    input, select, textarea { font-size: 16px !important; }
+    
     h1,h2,h3 { font-family:"Fraunces",serif; }
     .canva-card { background: #ffffff; border: 1px solid #e4dccb; }
     .canva-button { background: var(--forest); color: white; cursor: pointer; transition: 0.2s; }
@@ -194,7 +205,7 @@
               <div class="relative w-full h-[200px] mx-auto mt-2"><canvas id="attendanceChart"></canvas></div>
             </article>
             <article class="canva-card rounded-xl p-4 shadow-sm flex flex-col">
-              <h3 class="text-xs font-bold text-stone-600 mb-2">Status Setoran Harian</h3>
+              <h3 class="text-xs font-bold text-stone-600 mb-2">Kualitas Setoran (Lancar/Perbaikan/Diulang)</h3>
               <div class="relative w-full h-[200px] mx-auto mt-2"><canvas id="setoranChart"></canvas></div>
             </article>
           </div>
@@ -203,8 +214,8 @@
 
       <div id="dash-analitik" class="space-y-6 hidden">
         <section class="canva-card rounded-2xl p-5 shadow-sm">
-          <h2 class="text-xl font-bold">Grafik Perkembangan Hafalan (Baris)</h2>
-          <p class="text-stone-500 text-sm mt-1 mb-4">Tren penambahan hafalan per hari.</p>
+          <h2 class="text-xl font-bold">Grafik Tren Sabaq, Sabqi, Manzil</h2>
+          <p class="text-stone-500 text-sm mt-1 mb-4">Tren penambahan hafalan per hari berdasarkan 3 lapis sistem.</p>
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5 w-full xl:w-[50rem]">
             <div><label class="block text-xs font-semibold mb-1">Mulai Tgl</label><input type="date" id="prog-start" class="field-input text-xs !py-2"></div>
             <div><label class="block text-xs font-semibold mb-1">Sampai Tgl</label><input type="date" id="prog-end" class="field-input text-xs !py-2"></div>
@@ -307,6 +318,20 @@
 
       <!-- MODE CEPAT -->
       <div id="fast-mode-container" class="space-y-4 hidden">
+        
+        <!-- INFO SABAQ SABQI MANZIL -->
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 shadow-sm flex gap-3">
+          <i data-lucide="info" class="flex-shrink-0 text-emerald-600" style="width:20px;height:20px"></i>
+          <div>
+            <p class="font-bold mb-1">Keterangan Metode Tahfidz:</p>
+            <ul class="list-disc pl-4 space-y-1">
+              <li><strong>Sabaq</strong>: Hafalan baru yang disetorkan hari ini.</li>
+              <li><strong>Sabqi</strong>: Mengulang hafalan baru (1-2 minggu terakhir).</li>
+              <li><strong>Manzil</strong>: Mengulang hafalan lama (bulan/tahun lalu) agar terjaga.</li>
+            </ul>
+          </div>
+        </div>
+
         <div class="sticky top-0 z-30 bg-[#f7f5f0] pt-2 pb-3 -mx-4 px-4 border-b border-stone-200 shadow-sm">
           <div class="flex items-center gap-2 mb-2">
             <div class="relative flex-1">
@@ -783,6 +808,34 @@
           </div>
           <div id="teacher-list" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
         </section>
+
+        <!-- Manajemen Akun -->
+        <section class="canva-card rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+            <div>
+              <h2 class="text-xl font-bold">Manajemen Akun Guru/Admin</h2>
+              <p class="text-stone-500 text-sm mt-1">Kelola akses login untuk guru dan admin.</p>
+            </div>
+            <button id="add-user-admin" type="button" class="canva-button rounded-lg px-4 py-2.5 font-semibold inline-flex gap-2 items-center justify-center">
+              <i data-lucide="user-plus" style="width:17px;height:17px"></i> Tambah Akun
+            </button>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-[#e4dccb]">
+            <table class="w-full min-w-[640px] text-sm text-left">
+              <thead class="bg-[#f3eee2] text-[#4a4436]">
+                <tr>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb] w-12">No</th>
+                  <th class="px-4 py-2 font-semibold border-r border-[#e4dccb]">Username</th>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb]">PIN</th>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb]">Role</th>
+                  <th class="px-3 py-2 text-center font-semibold border-r border-[#e4dccb]">Halaqah</th>
+                  <th class="px-4 py-2 text-right font-semibold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="admin-user-list" class="bg-white"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
       <!-- TAB 4: AUDIT LOG -->
@@ -951,6 +1004,34 @@
   </div>
 </div>
 
+<!-- Modal User (Akun) -->
+<div id="user-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
+  <div class="canva-card relative w-full max-w-sm mx-auto rounded-2xl p-6 shadow-2xl modal-content">
+    <div class="flex items-start justify-between gap-3 mb-5">
+      <div><p class="text-xs uppercase tracking-[.14em] font-bold text-emerald-600">AKUN PENGGUNA</p><h2 id="user-modal-title" class="text-xl font-semibold mt-1">Tambah Akun</h2></div>
+      <button id="close-user-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    </div>
+    <form id="user-form" class="space-y-4">
+      <input type="hidden" id="user-old-username">
+      <div><label class="block text-sm font-semibold mb-1">Username</label><input id="user-username" type="text" class="field-input" placeholder="Misal: guru1" required></div>
+      <div><label class="block text-sm font-semibold mb-1">PIN</label><input id="user-pin" type="text" class="field-input" placeholder="Misal: 1234" required></div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">Role</label>
+        <select id="user-role" class="field-input">
+            <option value="Guru">Guru</option>
+            <option value="Admin">Admin</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold mb-1">Akses Halaqah</label>
+        <select id="user-halaqah" class="field-input filter-select"></select>
+      </div>
+      <p id="user-error" class="hidden text-sm text-red-700 rounded-lg bg-red-50 px-3 py-2"></p>
+      <button id="user-submit" type="submit" class="canva-button w-full rounded-lg py-3 font-semibold mt-2">Simpan Akun</button>
+    </form>
+  </div>
+</div>
+
 <!-- Modal Import CSV -->
 <div id="import-modal" class="hidden fixed inset-0 z-[60] px-4 py-6 overflow-y-auto modal-backdrop flex items-center justify-center">
   <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl modal-content">
@@ -1017,7 +1098,7 @@
 <div id="toast-container"></div>
 
 <!-- Bottom Nav (Mobile Only) -->
-<nav class="mobile-nav fixed bottom-0 w-full bg-white border-t border-stone-200 flex justify-around py-2 px-1 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<nav class="mobile-nav fixed bottom-0 w-full bg-white border-t border-stone-200 flex justify-around py-2 px-1 z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] pb-[env(safe-area-inset-bottom)]">
   <button class="nav-bottom-btn flex flex-col items-center gap-1 text-emerald-600" onclick="document.getElementById('nav-dashboard').click()">
     <i data-lucide="layout-dashboard" style="width:22px;height:22px"></i>
     <span class="text-[10px] font-bold">Home</span>
@@ -1165,10 +1246,10 @@
   </article>
 </template>
 
-  <script src="./js/config.js?v=3"></script>
-  <script src="./js/api.js?v=3"></script>
-  <script src="./js/app.js?v=3"></script>
-  <script src="./js/fitur-baru.js?v=3"></script>
-  <script src="./js/input-cepat.js?v=3"></script>
+<script src="./js/config.js?v=3"></script>
+<script src="./js/api.js?v=3"></script>
+<script src="./js/app.js?v=3"></script>
+<script src="./js/fitur-baru.js?v=3"></script>
+<script src="./js/input-cepat.js?v=3"></script>
 </body>
 </html>
