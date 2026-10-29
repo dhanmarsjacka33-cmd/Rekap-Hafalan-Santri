@@ -788,9 +788,9 @@ if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("c
       node.querySelector(".exam-score").textContent = u.ayat; 
       const pred = node.querySelector(".exam-predicate"); 
       pred.textContent = u.status; 
-      if (u.status === "Roosib" || u.status === "Maqbuul") pred.className = "exam-predicate text-[10px] font-bold px-2 py-1 rounded bg-rose-50 text-rose-700 uppercase"; 
-      else if (u.status.includes("Jayyid")) pred.className = "exam-predicate text-[10px] font-bold px-2 py-1 rounded bg-emerald-50 text-emerald-700 uppercase"; 
-      else pred.className = "exam-predicate text-[10px] font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-700 uppercase"; 
+      if (u.status === "Roosib" || u.status === "Maqbuul") { pred.className = "exam-predicate"; pred.style.cssText = "margin:0;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:#fef2f2;color:#b91c1c;text-transform:uppercase;"; }
+      else if (u.status.includes("Jayyid")) { pred.className = "exam-predicate"; pred.style.cssText = "margin:0;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:#ecfdf5;color:#047857;text-transform:uppercase;"; }
+      else { pred.className = "exam-predicate"; pred.style.cssText = "margin:0;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:#eef2ff;color:#4338ca;text-transform:uppercase;"; }
       
       node.querySelector(".exam-kel").textContent = u.juz; 
       node.querySelector(".exam-taj").textContent = u.jumlah_baris; 
