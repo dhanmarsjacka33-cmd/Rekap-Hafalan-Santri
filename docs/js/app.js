@@ -815,7 +815,64 @@ if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("c
   byId("print-rapor-btn").classList.remove("hidden"); 
   byId("report-poster-wrapper").scrollIntoView({behavior: "smooth", block: "start"});
 });
-if (byId("print-rapor-btn")) byId("print-rapor-btn").addEventListener("click", () => { document.body.classList.add("print-mode-rapor"); setTimeout(() => { window.print(); document.body.classList.remove("print-mode-rapor"); }, 300); });
+
+// === PRINT RAPOR via NEW WINDOW (POPUP) ===
+if (byId("print-rapor-btn")) byId("print-rapor-btn").addEventListener("click", () => {
+  const printArea = byId("print-area");
+  if (!printArea || !printArea.innerHTML.trim()) return alert("Rapor belum di-generate. Klik 'Tampilkan Rapor' dulu.");
+  
+  const content = printArea.outerHTML;
+  
+  const printWin = window.open('', '_blank', 'width=1000,height=900');
+  if (!printWin) return alert("Popup diblokir. Izinkan popup untuk aplikasi ini di pengaturan browser Anda.");
+  
+  printWin.document.open();
+  printWin.document.write(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapor Perkembangan Santri</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"><\/script>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --forest:#1f6f54; --paper:#fffdf8; --ink:#2e2a20; --line:#d6cdb8; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: 'Work Sans', sans-serif; color: var(--ink); }
+    @page { size: A4 portrait; margin: 0; }
+    #print-area { width: 210mm; background: white; }
+    .page-break {
+      width: 210mm;
+      min-height: 260mm;
+      padding: 10mm;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      page-break-after: always;
+      break-after: page;
+    }
+    .page-break:last-child { page-break-after: auto; break-after: auto; }
+    @media screen {
+      body { background: #e5e5e5; padding: 20px; }
+      #print-area { margin: 0 auto; }
+      .page-break { box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-bottom: 20px; }
+    }
+  </style>
+</head>
+<body>
+${content}
+<script>
+  window.onload = function() {
+    if (window.lucide) try { lucide.createIcons(); } catch(e) {}
+    setTimeout(function() { window.focus(); window.print(); }, 1500);
+  };
+<\/script>
+</body>
+</html>`);
+  printWin.document.close();
+});
 
 if (byId("print-rekap-btn")) byId("print-rekap-btn").addEventListener("click", () => { const listHtml = byId("rekap-grid-list").innerHTML; if (!listHtml || byId("rekap-grid-list").children.length === 0) return alert("Tabel kosong."); const bln = byId("rekap-bulan-input").value; const h = byId("rekap-halaqah").value || "Semua Halaqah"; const k = byId("rekap-kelas").value || "Semua Kelas"; const printWin = window.open('', '_blank'); printWin.document.write(`<!DOCTYPE html><html><head><title>Rekap Bulanan</title><style>@page{size:A4 portrait;margin:15mm}body{font-family:Arial,sans-serif;color:#333;margin:0;padding:0}.header{text-align:center;border-bottom:2px solid #1f6f54;padding-bottom:10px;margin-bottom:20px}.header h1{font-size:20px;margin:0;color:#1f6f54;text-transform:uppercase}.header p{font-size:13px;margin:5px 0 0 0;color:#555}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ddd;padding:8px 6px;text-align:center}th{background-color:#f7f5f0;color:#1f6f54;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact}td:nth-child(2){text-align:left;font-weight:bold}tr:nth-child(even){background-color:#fcfaf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body><div class="header"><h1>Rekap Kehadiran & Hafalan Bulanan</h1><p>Periode: <strong>${bln}</strong> | Halaqah: <strong>${h}</strong> | Kelas: <strong>${k}</strong></p></div><table><thead><tr><th>No</th><th>Nama Santri</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alfa</th><th>Sabaq</th><th>Sabqi</th><th>Manzil</th></tr></thead><tbody>${listHtml}</tbody></table><script>window.onload=function(){setTimeout(()=>{window.print()},400)}<\/script></body></html>`); printWin.document.close(); });
 if (byId("print-leaderboard-btn")) byId("print-leaderboard-btn").addEventListener("click", () => { if (currentLeaderboardData.length === 0) return alert("Tidak ada data."); if (activeLeaderboardTab === "wanted") return alert("Mode Wanted: gunakan screenshot."); if (activeLeaderboardTab === "kandidat") return alert("Mode kandidat: gunakan CSV."); const start = byId("leaderboard-start").value, end = byId("leaderboard-end").value; const catText = activeLeaderboardTab === "quran" ? "AL-QURAN" : activeLeaderboardTab === "iqra" ? "IQRA" : "NILAI UJIAN"; const periodText = (start || end) ? `Periode: ${start || 'Awal'} s/d ${end || 'Sekarang'}` : 'Semua Waktu'; let rowsHtml = ""; currentLeaderboardData.forEach((item, i) => { let scoreText = ""; if (item.type === "quran") scoreText = `${item.baris} baris`; else if (item.type === "iqra") scoreText = `Jilid ${item.maxJilid} - Hal ${item.maxHalaman}`; else scoreText = `Nilai: ${item.maxScore} (${item.predicate})`; const rankCol = item.rank === "-" ? i + 1 : item.rank; rowsHtml += `<tr><td style="font-weight:bold;font-size:14px;">${rankCol}</td><td style="text-align:left;padding-left:12px;font-weight:600;">${esc(item.nama)}</td><td>${esc(item.kelas)}</td><td>${esc(item.halaqah)}</td><td style="font-weight:bold;color:#1f6f54;">${scoreText}</td></tr>`; }); const printWin = window.open('', '_blank'); printWin.document.write(`<!DOCTYPE html><html><head><title>Leaderboard ${catText}</title><style>@page{size:A4 portrait;margin:20mm}body{font-family:Arial,sans-serif;color:#333;margin:0;padding:0}.header{text-align:center;border-bottom:2px solid #1f6f54;padding-bottom:15px;margin-bottom:25px}.header h1{font-size:22px;margin:0;color:#1f6f54;letter-spacing:1px}.header p{font-size:13px;margin:6px 0 0 0;color:#555;font-weight:bold}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #ddd;padding:10px 6px;text-align:center}th{background-color:#f7f5f0;color:#1f6f54;font-weight:bold;text-transform:uppercase;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}tr:nth-child(even){background-color:#fcfaf5;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body><div class="header"><h1>${catText}</h1><p>${periodText}</p></div><table><thead><tr><th>No</th><th style="text-align:left;padding-left:12px;">Nama Santri</th><th>Kelas</th><th>Halaqah</th><th>Pencapaian</th></tr></thead><tbody>${rowsHtml}</tbody></table><script>window.onload=function(){setTimeout(()=>{window.print()},400)}<\/script></body></html>`); printWin.document.close(); });
