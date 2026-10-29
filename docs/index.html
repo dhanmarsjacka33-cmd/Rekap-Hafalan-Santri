@@ -52,16 +52,22 @@
     .roster-card { transition: opacity 0.3s, background-color 0.3s; border-left: 4px solid #059669; }
     .roster-card.sudah-setor { opacity: 0.6; background-color: #f8fafc; pointer-events: none; border-left-color: #cbd5e1; }
     .roster-card.sudah-setor .btn-main { background-color: #d1fae5; color: #047857; }
-    @media (max-width: 768px) { .modal-content { width: 100%; height: 100%; max-height: 100%; border-radius: 0; } .desktop-nav { display: none !important; } }
+    @media (max-width: 768px) {
+      .modal-content { width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+      .desktop-nav { display: none !important; }
+    }
     @media (min-width: 769px) { .mobile-nav { display: none !important; } }
   </style>
 </head>
 <body class="pb-24 md:pb-0 bg-[#f7f5f0]">
 
+<!-- LOGIN UI -->
 <div id="login-ui" class="fixed inset-0 bg-[#1c2821] z-[200] flex items-center justify-center hidden">
   <div class="canva-card p-8 rounded-2xl shadow-2xl w-full max-w-sm">
     <div class="text-center mb-6">
-      <div class="bg-emerald-100 text-emerald-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="lock" style="width:32px;height:32px"></i></div>
+      <div class="bg-emerald-100 text-emerald-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="lock" style="width:32px;height:32px"></i>
+      </div>
       <h2 class="text-2xl font-bold">Login Sistem</h2>
       <p class="text-stone-500 text-sm">Rekap Hafalan Santri</p>
     </div>
@@ -110,6 +116,7 @@
       </div>
     </section>
 
+    <!-- VIEW: DASHBOARD -->
     <div id="view-dashboard" class="space-y-6 soft-enter block">
       <div class="flex justify-center mb-4"><div class="bg-stone-200 p-1 rounded-xl flex gap-1"><button id="tab-dash-ringkasan" class="px-6 py-2 rounded-lg text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all" onclick="switchDashTab('ringkasan')">Ringkasan</button><button id="tab-dash-analitik" class="px-6 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchDashTab('analitik')">Analitik & Leaderboard</button></div></div>
       <div id="dash-ringkasan" class="space-y-6">
@@ -168,6 +175,7 @@
       </div>
     </div>
 
+    <!-- VIEW: INPUT DATA -->
     <div id="view-input" class="space-y-6 hidden soft-enter pb-24">
       <div class="flex justify-end gap-2 mb-2">
         <button id="mode-roster-btn" class="btn-outline px-4 py-2 text-sm flex items-center gap-2 text-stone-600 bg-white"><i data-lucide="list" style="width:16px;height:16px"></i> Mode Roster</button>
@@ -246,9 +254,9 @@
       </section>
     </div>
 
+    <!-- VIEW: LAPORAN -->
     <div id="view-laporan" class="space-y-6 hidden soft-enter pb-24">
       <div class="flex justify-center mb-4 overflow-x-auto"><div class="bg-stone-200 p-1 rounded-xl flex gap-1 whitespace-nowrap"><button id="tab-lap-1" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold bg-white text-emerald-700 shadow-sm transition-all" onclick="switchRaporTab('lap-1')">Rekap & Rapor</button><button id="tab-lap-2" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-2')">Log & Mutasi</button><button id="tab-lap-3" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-3')">Manajemen Data</button><button id="tab-lap-4" class="px-4 py-2 rounded-lg text-xs md:text-sm font-bold text-stone-500 hover:text-stone-700 transition-all" onclick="switchRaporTab('lap-4')">Audit Log</button></div></div>
-
       <div id="lap-1" class="space-y-6">
         <section class="canva-card rounded-2xl p-5 shadow-sm">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2 cursor-pointer hover:bg-stone-50 p-2 -mx-2 rounded-lg transition-colors" onclick="document.getElementById('rekap-grid-body').classList.toggle('hidden'); document.getElementById('icon-col-rekap').classList.toggle('rotate-180');">
@@ -272,96 +280,96 @@
           <div id="report-poster-wrapper" class="hidden mt-8 flex justify-center bg-stone-200 p-4 overflow-x-auto">
             <div id="print-area" style="width: 210mm; height: 297mm; padding: 8mm; box-sizing: border-box; background: white; font-family: 'Work Sans', 'Segoe UI', sans-serif; color: #2e2a20; display: flex; flex-direction: column; gap: 2mm; overflow: hidden;">
 
-              <div style="background: #1f6f54; color: white; border-radius: 8px; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+              <div style="background: #1f6f54; color: white; border-radius: 8px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                 <div>
-                  <p style="margin: 0 0 2px 0; font-size: 8px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; opacity: 0.85;">RAPOR PERKEMBANGAN SANTRI</p>
-                  <h2 id="report-student-name" style="margin: 0; font-size: 20px; font-weight: 700; line-height: 1.1;">—</h2>
-                  <p id="report-student-meta" style="margin: 2px 0 0 0; font-size: 10px; opacity: 0.9;">—</p>
+                  <p style="margin: 0 0 3px 0; font-size: 10px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase; opacity: 0.85;">RAPOR PERKEMBANGAN SANTRI</p>
+                  <h2 id="report-student-name" style="margin: 0; font-size: 24px; font-weight: 700; line-height: 1.15;">—</h2>
+                  <p id="report-student-meta" style="margin: 3px 0 0 0; font-size: 12px; opacity: 0.9;">—</p>
                 </div>
                 <div style="text-align: right;">
-                  <p style="margin: 0 0 1px 0; font-size: 8px; opacity: 0.8;">Periode:</p>
-                  <p id="report-period-text" style="margin: 0; font-size: 10px; font-weight: 700; white-space: nowrap;">—</p>
+                  <p style="margin: 0 0 2px 0; font-size: 10px; opacity: 0.8;">Periode:</p>
+                  <p id="report-period-text" style="margin: 0; font-size: 12px; font-weight: 700; white-space: nowrap;">—</p>
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; height: 32mm; flex-shrink: 0;">
-                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 6px 8px; overflow: hidden;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Ringkasan Kehadiran</h3>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <div><p style="margin: 0; font-size: 8px; color: #78716c;">Persentase</p><p id="rpt-attendance-percent" style="margin: 0; font-size: 20px; font-weight: 700; color: #1f6f54; line-height: 1;">0%</p></div>
-                    <div style="width: 24px; height: 24px; border-radius: 50%; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;"><i data-lucide="heart" style="width:14px;height:14px"></i></div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; height: 38mm; flex-shrink: 0;">
+                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; overflow: hidden;">
+                  <h3 style="margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Ringkasan Kehadiran</h3>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <div><p style="margin: 0; font-size: 10px; color: #78716c;">Persentase</p><p id="rpt-attendance-percent" style="margin: 0; font-size: 26px; font-weight: 700; color: #1f6f54; line-height: 1;">0%</p></div>
+                    <div style="width: 34px; height: 34px; border-radius: 50%; background: #ecfdf5; color: #059669; display: flex; align-items: center; justify-content: center;"><i data-lucide="heart" style="width:18px;height:18px"></i></div>
                   </div>
-                  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;">
-                    <div style="background: #e2f4e8; border-radius: 4px; padding: 3px 1px; text-align: center;"><p style="margin: 0; font-size: 6px; font-weight: 700; text-transform: uppercase; color: #065f46;">Hadir</p><p id="rpt-hadir" style="margin: 0; font-size: 12px; font-weight: 700; color: #064e3b;">0</p></div>
-                    <div style="background: #ffe9e2; border-radius: 4px; padding: 3px 1px; text-align: center;"><p style="margin: 0; font-size: 6px; font-weight: 700; text-transform: uppercase; color: #9f1239;">Sakit</p><p id="rpt-sakit" style="margin: 0; font-size: 12px; font-weight: 700; color: #881337;">0</p></div>
-                    <div style="background: #fff3ce; border-radius: 4px; padding: 3px 1px; text-align: center;"><p style="margin: 0; font-size: 6px; font-weight: 700; text-transform: uppercase; color: #92400e;">Izin</p><p id="rpt-izin" style="margin: 0; font-size: 12px; font-weight: 700; color: #78350f;">0</p></div>
-                    <div style="background: #f3e2e6; border-radius: 4px; padding: 3px 1px; text-align: center;"><p style="margin: 0; font-size: 6px; font-weight: 700; text-transform: uppercase; color: #831843;">Alfa</p><p id="rpt-alfa" style="margin: 0; font-size: 12px; font-weight: 700; color: #500724;">0</p></div>
+                  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;">
+                    <div style="background: #e2f4e8; border-radius: 5px; padding: 4px 2px; text-align: center;"><p style="margin: 0; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #065f46;">Hadir</p><p id="rpt-hadir" style="margin: 1px 0 0 0; font-size: 16px; font-weight: 700; color: #064e3b;">0</p></div>
+                    <div style="background: #ffe9e2; border-radius: 5px; padding: 4px 2px; text-align: center;"><p style="margin: 0; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #9f1239;">Sakit</p><p id="rpt-sakit" style="margin: 1px 0 0 0; font-size: 16px; font-weight: 700; color: #881337;">0</p></div>
+                    <div style="background: #fff3ce; border-radius: 5px; padding: 4px 2px; text-align: center;"><p style="margin: 0; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #92400e;">Izin</p><p id="rpt-izin" style="margin: 1px 0 0 0; font-size: 16px; font-weight: 700; color: #78350f;">0</p></div>
+                    <div style="background: #f3e2e6; border-radius: 5px; padding: 4px 2px; text-align: center;"><p style="margin: 0; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #831843;">Alfa</p><p id="rpt-alfa" style="margin: 1px 0 0 0; font-size: 16px; font-weight: 700; color: #500724;">0</p></div>
                   </div>
                 </div>
-                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 6px 8px; overflow: hidden;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Progres Hafalan</h3>
-                  <div style="margin-bottom: 4px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; margin-bottom: 2px;"><span>Target Sabaq</span><span id="rpt-progress-text" style="color: #1f6f54;">0%</span></div>
-                    <div style="height: 5px; background: #f5f5f4; border-radius: 99px; overflow: hidden;"><div id="rpt-progress-bar" style="height: 100%; width: 0%; background: #1f6f54; border-radius: 99px;"></div></div>
-                    <p style="margin: 2px 0 0 0; font-size: 7px; color: #78716c; text-align: right;"><span id="rpt-progress-baris">0</span> / <span id="rpt-target-baris">300</span> baris</p>
+                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; overflow: hidden;">
+                  <h3 style="margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Progres Hafalan</h3>
+                  <div style="margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 3px;"><span>Target Sabaq</span><span id="rpt-progress-text" style="color: #1f6f54;">0%</span></div>
+                    <div style="height: 7px; background: #f5f5f4; border-radius: 99px; overflow: hidden;"><div id="rpt-progress-bar" style="height: 100%; width: 0%; background: #1f6f54; border-radius: 99px;"></div></div>
+                    <p style="margin: 3px 0 0 0; font-size: 9px; color: #78716c; text-align: right;"><span id="rpt-progress-baris">0</span> / <span id="rpt-target-baris">300</span> baris</p>
                   </div>
                   <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 9px; font-weight: 700; margin-bottom: 2px;"><span>Target Sabqi</span><span id="rpt-murojaah-progress-text" style="color: #4f46e5;">0%</span></div>
-                    <div style="height: 5px; background: #f5f5f4; border-radius: 99px; overflow: hidden;"><div id="rpt-murojaah-bar" style="height: 100%; width: 0%; background: #6366f1; border-radius: 99px;"></div></div>
-                    <p style="margin: 2px 0 0 0; font-size: 7px; color: #78716c; text-align: right;"><span id="rpt-murojaah-baris">0</span> / <span id="rpt-murojaah-target-baris">300</span> baris</p>
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 3px;"><span>Target Sabqi</span><span id="rpt-murojaah-progress-text" style="color: #4f46e5;">0%</span></div>
+                    <div style="height: 7px; background: #f5f5f4; border-radius: 99px; overflow: hidden;"><div id="rpt-murojaah-bar" style="height: 100%; width: 0%; background: #6366f1; border-radius: 99px;"></div></div>
+                    <p style="margin: 3px 0 0 0; font-size: 9px; color: #78716c; text-align: right;"><span id="rpt-murojaah-baris">0</span> / <span id="rpt-murojaah-target-baris">300</span> baris</p>
                   </div>
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; height: 34mm; flex-shrink: 0;">
-                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 6px 8px; overflow: hidden;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Capaian Hafalan Baru</h3>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; height: calc(100% - 14px);">
-                    <div style="background: #fcfaf5; border: 1px solid #e7e5e4; border-radius: 6px; padding: 4px 6px; display: flex; flex-direction: column; justify-content: center;">
-                      <p style="margin: 0; font-size: 6px; font-weight: 700; text-transform: uppercase; color: #78716c;">Batas Awal</p>
-                      <p id="rpt-batas-awal" style="margin: 0 0 3px 0; font-size: 9px; font-weight: 700; line-height: 1.2;">—</p>
-                      <p style="margin: 0; font-size: 6px; font-weight: 700; text-transform: uppercase; color: #78716c;">Batas Akhir</p>
-                      <p id="rpt-batas-akhir" style="margin: 0; font-size: 9px; font-weight: 700; line-height: 1.2;">—</p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; height: 42mm; flex-shrink: 0;">
+                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; overflow: hidden;">
+                  <h3 style="margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Capaian Hafalan Baru</h3>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; height: calc(100% - 22px);">
+                    <div style="background: #fcfaf5; border: 1px solid #e7e5e4; border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center;">
+                      <p style="margin: 0; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #78716c;">Batas Awal</p>
+                      <p id="rpt-batas-awal" style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; line-height: 1.3;">—</p>
+                      <p style="margin: 0; font-size: 8px; font-weight: 700; text-transform: uppercase; color: #78716c;">Batas Akhir</p>
+                      <p id="rpt-batas-akhir" style="margin: 0; font-size: 11px; font-weight: 700; line-height: 1.3;">—</p>
                     </div>
-                    <div style="background: #e2f4e8; border: 1px solid #a7f3d0; border-radius: 6px; padding: 4px 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                      <p style="margin: 0; font-size: 7px; font-weight: 700; text-transform: uppercase; color: #065f46;">Total</p>
-                      <p id="rpt-total-baris" style="margin: 1px 0; font-size: 22px; font-weight: 700; color: #1f6f54; line-height: 1;">—</p>
-                      <p style="margin: 0; font-size: 7px; font-weight: 700; text-transform: uppercase; color: #047857;">Baris</p>
+                    <div style="background: #e2f4e8; border: 1px solid #a7f3d0; border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                      <p style="margin: 0; font-size: 9px; font-weight: 700; text-transform: uppercase; color: #065f46;">Total Disetorkan</p>
+                      <p id="rpt-total-baris" style="margin: 2px 0; font-size: 28px; font-weight: 700; color: #1f6f54; line-height: 1;">—</p>
+                      <p style="margin: 0; font-size: 9px; font-weight: 700; text-transform: uppercase; color: #047857;">Baris</p>
                     </div>
                   </div>
                 </div>
-                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 6px 8px; overflow: hidden;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Peta Kualitas Hafalan</h3>
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; height: calc(100% - 14px);">
-                    <div style="background: #e2f4e8; border: 1px solid #a7f3d0; border-radius: 6px; padding: 4px; overflow: hidden;">
-                      <p style="margin: 0 0 2px 0; padding-bottom: 2px; border-bottom: 1px solid #a7f3d0; font-size: 7px; font-weight: 700; color: #065f46;">Hafalan Kuat</p>
-                      <ul id="rpt-hafalan-kuat" style="margin: 0; padding-left: 8px; font-size: 6px; color: #064e3b; line-height: 1.3; max-height: calc(100% - 12px); overflow: hidden;"></ul>
+                <div style="border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; overflow: hidden;">
+                  <h3 style="margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Peta Kualitas Hafalan</h3>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; height: calc(100% - 22px);">
+                    <div style="background: #e2f4e8; border: 1px solid #a7f3d0; border-radius: 6px; padding: 5px 6px; overflow: hidden;">
+                      <p style="margin: 0 0 3px 0; padding-bottom: 3px; border-bottom: 1px solid #a7f3d0; font-size: 9px; font-weight: 700; color: #065f46;">Hafalan Kuat</p>
+                      <ul id="rpt-hafalan-kuat" style="margin: 0; padding-left: 12px; font-size: 8px; color: #064e3b; line-height: 1.4; max-height: calc(100% - 16px); overflow: hidden;"></ul>
                     </div>
-                    <div style="background: #ffe9e2; border: 1px solid #fecdd3; border-radius: 6px; padding: 4px; overflow: hidden;">
-                      <p style="margin: 0 0 2px 0; padding-bottom: 2px; border-bottom: 1px solid #fecdd3; font-size: 7px; font-weight: 700; color: #9f1239;">Perlu Penguatan</p>
-                      <ul id="rpt-hafalan-lemah" style="margin: 0; padding-left: 8px; font-size: 6px; color: #881337; line-height: 1.3; max-height: calc(100% - 12px); overflow: hidden;"></ul>
+                    <div style="background: #ffe9e2; border: 1px solid #fecdd3; border-radius: 6px; padding: 5px 6px; overflow: hidden;">
+                      <p style="margin: 0 0 3px 0; padding-bottom: 3px; border-bottom: 1px solid #fecdd3; font-size: 9px; font-weight: 700; color: #9f1239;">Perlu Penguatan</p>
+                      <ul id="rpt-hafalan-lemah" style="margin: 0; padding-left: 12px; font-size: 8px; color: #881337; line-height: 1.4; max-height: calc(100% - 16px); overflow: hidden;"></ul>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div id="rpt-exam-section" class="hidden" style="flex-shrink: 0; max-height: 40mm; overflow: hidden;">
-                <h3 style="margin: 0 0 3px 0; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Hasil Ujian (UTS/UAS)</h3>
+              <div id="rpt-exam-section" class="hidden" style="flex-shrink: 0; max-height: 50mm; overflow: hidden;">
+                <h3 style="margin: 0 0 4px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c;">Hasil Ujian (UTS/UAS)</h3>
                 <div id="rpt-exam-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2mm;"></div>
               </div>
 
               <div style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
-                <h3 style="margin: 0 0 3px 0; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c; flex-shrink: 0;">Jurnal Setoran Hafalan (10 Terakhir)</h3>
+                <h3 style="margin: 0 0 4px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #78716c; flex-shrink: 0;">Jurnal Setoran Hafalan (10 Terakhir)</h3>
                 <div style="flex: 1; min-height: 0; overflow: hidden; border: 1px solid #e7e5e4; border-radius: 8px;">
-                  <table style="width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed;">
                     <thead style="background: #f3eee2; color: #4a4436;">
                       <tr>
-                        <th style="padding: 4px 6px; text-align: center; font-size: 8px; text-transform: uppercase; width: 15%;">Tanggal</th>
-                        <th style="padding: 4px 6px; text-align: center; font-size: 8px; text-transform: uppercase; width: 15%;">Kategori</th>
-                        <th style="padding: 4px 6px; text-align: center; font-size: 8px; text-transform: uppercase; width: 15%;">Predikat</th>
-                        <th style="padding: 4px 6px; text-align: center; font-size: 8px; text-transform: uppercase; width: 10%;">Juz</th>
-                        <th style="padding: 4px 6px; font-size: 8px; text-transform: uppercase;">Surah / Hal</th>
-                        <th style="padding: 4px 6px; text-align: right; font-size: 8px; text-transform: uppercase; width: 10%;">Baris</th>
+                        <th style="padding: 6px 8px; text-align: center; font-size: 9px; text-transform: uppercase; width: 15%;">Tanggal</th>
+                        <th style="padding: 6px 8px; text-align: center; font-size: 9px; text-transform: uppercase; width: 15%;">Kategori</th>
+                        <th style="padding: 6px 8px; text-align: center; font-size: 9px; text-transform: uppercase; width: 15%;">Predikat</th>
+                        <th style="padding: 6px 8px; text-align: center; font-size: 9px; text-transform: uppercase; width: 10%;">Juz</th>
+                        <th style="padding: 6px 8px; font-size: 9px; text-transform: uppercase;">Surah / Hal</th>
+                        <th style="padding: 6px 8px; text-align: right; font-size: 9px; text-transform: uppercase; width: 10%;">Baris</th>
                       </tr>
                     </thead>
                     <tbody id="rpt-history-body"></tbody>
@@ -369,11 +377,11 @@
                 </div>
               </div>
 
-              <div style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 4px; border-top: 1px solid #e7e5e4; font-size: 8px; color: #78716c;">
+              <div style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 6px; border-top: 1px solid #e7e5e4; font-size: 10px; color: #78716c;">
                 <p style="margin: 0;">Dicetak pada: <span id="rpt-print-date">—</span></p>
                 <div style="text-align: center;">
-                  <p style="margin: 0 0 22px 0;">Tanda Tangan Guru Pengampu,</p>
-                  <p style="margin: 0; padding: 2px 24px 0; border-top: 1px solid #a8a29e;">&nbsp;</p>
+                  <p style="margin: 0 0 25px 0;">Tanda Tangan Guru Pengampu,</p>
+                  <p style="margin: 0; padding: 2px 30px 0; border-top: 1px solid #a8a29e;">&nbsp;</p>
                 </div>
               </div>
 
@@ -590,10 +598,20 @@
 </template>
 
 <template id="rpt-exam-card-template">
-  <div style="border: 1px solid #d8e5dd; border-radius: 6px; padding: 6px; background: white; overflow: hidden;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;"><p class="exam-title" style="margin: 0; font-size: 8px; font-weight: 700; color: #1f6f54; text-transform: uppercase; letter-spacing: 1px;"></p><p class="exam-date" style="margin: 0; font-size: 7px; color: #a8a29e;"></p></div>
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 3px; margin-bottom: 3px; border-bottom: 1px solid #f5f5f4;"><p class="exam-score" style="margin: 0; font-size: 18px; font-weight: 700; color: #292524; line-height: 1;">0</p><p class="exam-predicate" style="margin: 0; font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; background: #ecfdf5; color: #047857; text-transform: uppercase;">—</p></div>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; text-align: center;"><div><p style="margin: 0; font-size: 6px; color: #78716c; text-transform: uppercase;">Kelancaran</p><p class="exam-kel" style="margin: 0; font-size: 8px; font-weight: 700;">—</p></div><div><p style="margin: 0; font-size: 6px; color: #78716c; text-transform: uppercase;">Tajwid</p><p class="exam-taj" style="margin: 0; font-size: 8px; font-weight: 700;">—</p></div><div><p style="margin: 0; font-size: 6px; color: #78716c; text-transform: uppercase;">Fashahah</p><p class="exam-fas" style="margin: 0; font-size: 8px; font-weight: 700;">—</p></div></div>
+  <div style="border: 1px solid #d8e5dd; border-radius: 6px; padding: 8px 10px; background: white; overflow: hidden;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px;">
+      <p class="exam-title" style="margin: 0; font-size: 10px; font-weight: 700; color: #1f6f54; text-transform: uppercase; letter-spacing: 1px;"></p>
+      <p class="exam-date" style="margin: 0; font-size: 9px; color: #a8a29e;"></p>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 1px solid #f5f5f4;">
+      <p class="exam-score" style="margin: 0; font-size: 22px; font-weight: 700; color: #292524; line-height: 1;">0</p>
+      <p class="exam-predicate" style="margin: 0; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px; background: #ecfdf5; color: #047857; text-transform: uppercase;">—</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; text-align: center;">
+      <div><p style="margin: 0; font-size: 8px; color: #78716c; text-transform: uppercase;">Kelancaran</p><p class="exam-kel" style="margin: 0; font-size: 11px; font-weight: 700;">—</p></div>
+      <div><p style="margin: 0; font-size: 8px; color: #78716c; text-transform: uppercase;">Tajwid</p><p class="exam-taj" style="margin: 0; font-size: 11px; font-weight: 700;">—</p></div>
+      <div><p style="margin: 0; font-size: 8px; color: #78716c; text-transform: uppercase;">Fashahah</p><p class="exam-fas" style="margin: 0; font-size: 11px; font-weight: 700;">—</p></div>
+    </div>
   </div>
 </template>
 
@@ -601,10 +619,10 @@
   <article class="canva-card rounded-xl p-4 flex items-center justify-between gap-3 border-l-4 border-indigo-500 hover:bg-stone-50 transition-colors"><div><p class="kandidat-name font-bold text-sm text-stone-800"></p><p class="kandidat-meta text-[11px] text-stone-500 mt-0.5"></p><p class="kandidat-note text-[11px] text-indigo-700 italic mt-1 font-semibold leading-tight"></p></div><button type="button" class="delete-kandidat text-rose-500 hover:text-rose-700 bg-rose-50 rounded-lg p-2 transition-colors"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button></article>
 </template>
 
-<script src="./js/config.js?v=9"></script>
-<script src="./js/api.js?v=9"></script>
-<script src="./js/app.js?v=9"></script>
-<script src="./js/fitur-baru.js?v=9"></script>
-<script src="./js/input-cepat.js?v=9"></script>
+<script src="./js/config.js?v=10"></script>
+<script src="./js/api.js?v=10"></script>
+<script src="./js/app.js?v=10"></script>
+<script src="./js/fitur-baru.js?v=10"></script>
+<script src="./js/input-cepat.js?v=10"></script>
 </body>
 </html>
