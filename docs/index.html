@@ -80,7 +80,7 @@
     
     /* Print Styles for Rapor A4 Portrait */
     @media print {
-      @page { size: A4 portrait; margin: 10mm; }
+      @page { size: A4 portrait; margin: 0; }
       body.print-mode-rapor { background: white !important; overflow: visible !important; }
       body.print-mode-rapor * { visibility: hidden; }
       body.print-mode-rapor #print-area, body.print-mode-rapor #print-area * { visibility: visible; }
@@ -533,15 +533,15 @@
           </div>
 
           <div id="report-poster-wrapper" class="hidden mt-8 flex justify-center bg-stone-200 p-4 overflow-x-auto">
-            <div id="print-area" class="w-[210mm] min-h-[297mm] bg-white text-stone-800 shadow-xl">
+            <div id="print-area" class="w-[210mm] bg-white text-stone-800 shadow-xl">
               
               <!-- ================= HALAMAN 1 ================= -->
-              <div class="page-break p-10 h-[297mm] flex flex-col" style="box-sizing: border-box;">
+              <div class="page-break p-6 h-[297mm] flex flex-col" style="box-sizing: border-box; width: 210mm; max-width: 100%;">
                 <!-- Header -->
-                <div class="bg-[#1f6f54] text-white p-6 rounded-xl flex justify-between items-center mb-6">
+                <div class="bg-[#1f6f54] text-white p-5 rounded-xl flex justify-between items-center mb-4">
                   <div>
                     <p class="text-[10px] tracking-[.2em] font-bold uppercase mb-1 opacity-80"><i data-lucide="book-open" style="width:12px;height:12px" class="inline"></i> RAPOR PERKEMBANGAN SANTRI</p>
-                    <h2 id="report-student-name" class="text-3xl font-bold leading-tight">—</h2>
+                    <h2 id="report-student-name" class="text-2xl font-bold leading-tight">—</h2>
                     <p id="report-student-meta" class="text-sm mt-1 opacity-90">—</p>
                   </div>
                   <div class="text-right">
@@ -551,68 +551,71 @@
                 </div>
 
                 <!-- Grid 1: Kehadiran & Progres -->
-                <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                   <!-- Kehadiran -->
                   <div class="border border-stone-200 rounded-xl p-4">
-                    <h3 class="text-[11px] font-bold uppercase tracking-wider mb-3 text-stone-500">Ringkasan Kehadiran</h3>
-                    <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider mb-2 text-stone-500">Ringkasan Kehadiran</h3>
+                    <div class="flex justify-between items-center mb-3">
                       <div>
-                        <p class="text-xs text-stone-500 mb-1">Persentase</p>
-                        <p id="rpt-attendance-percent" class="text-3xl font-bold text-[#1f6f54]">0%</p>
+                        <p class="text-[10px] text-stone-500 mb-0.5">Persentase</p>
+                        <p id="rpt-attendance-percent" class="text-2xl font-bold text-[#1f6f54]">0%</p>
                       </div>
-                      <div class="bg-emerald-50 p-3 rounded-full text-emerald-600"><i data-lucide="heart" style="width:24px;height:24px"></i></div>
+                      <div class="bg-emerald-50 p-2 rounded-full text-emerald-600"><i data-lucide="heart" style="width:20px;height:20px"></i></div>
                     </div>
-                    <div class="grid grid-cols-4 gap-2">
-                      <div class="bg-[#e2f4e8] rounded-lg p-2 text-center"><p class="text-[9px] font-bold text-emerald-800 uppercase">Hadir</p><p id="rpt-hadir" class="text-lg font-bold text-emerald-900">0</p></div>
-                      <div class="bg-[#ffe9e2] rounded-lg p-2 text-center"><p class="text-[9px] font-bold text-rose-800 uppercase">Sakit</p><p id="rpt-sakit" class="text-lg font-bold text-rose-900">0</p></div>
-                      <div class="bg-[#fff3ce] rounded-lg p-2 text-center"><p class="text-[9px] font-bold text-amber-800 uppercase">Izin</p><p id="rpt-izin" class="text-lg font-bold text-amber-900">0</p></div>
-                      <div class="bg-[#f3e2e6] rounded-lg p-2 text-center"><p class="text-[9px] font-bold text-pink-800 uppercase">Alfa</p><p id="rpt-alfa" class="text-lg font-bold text-pink-900">0</p></div>
+                    <div class="grid grid-cols-4 gap-1.5">
+                      <div class="bg-[#e2f4e8] rounded-lg p-1.5 text-center"><p class="text-[8px] font-bold text-emerald-800 uppercase">Hadir</p><p id="rpt-hadir" class="text-base font-bold text-emerald-900">0</p></div>
+                      <div class="bg-[#ffe9e2] rounded-lg p-1.5 text-center"><p class="text-[8px] font-bold text-rose-800 uppercase">Sakit</p><p id="rpt-sakit" class="text-base font-bold text-rose-900">0</p></div>
+                      <div class="bg-[#fff3ce] rounded-lg p-1.5 text-center"><p class="text-[8px] font-bold text-amber-800 uppercase">Izin</p><p id="rpt-izin" class="text-base font-bold text-amber-900">0</p></div>
+                      <div class="bg-[#f3e2e6] rounded-lg p-1.5 text-center"><p class="text-[8px] font-bold text-pink-800 uppercase">Alfa</p><p id="rpt-alfa" class="text-base font-bold text-pink-900">0</p></div>
                     </div>
                   </div>
                   <!-- Progres -->
                   <div class="border border-stone-200 rounded-xl p-4">
-                    <h3 class="text-[11px] font-bold uppercase tracking-wider mb-3 text-stone-500">Progres Hafalan</h3>
-                    <div class="mb-4">
-                      <div class="flex justify-between text-xs font-bold mb-1"><span>Target Sabaq</span><span id="rpt-progress-text" class="text-[#1f6f54]">0%</span></div>
-                      <div class="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden"><div id="rpt-progress-bar" class="bg-[#1f6f54] h-full rounded-full" style="width: 0%;"></div></div>
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider mb-2 text-stone-500">Progres Hafalan</h3>
+                    <div class="mb-3">
+                      <div class="flex justify-between text-[11px] font-bold mb-1"><span>Target Sabaq</span><span id="rpt-progress-text" class="text-[#1f6f54]">0%</span></div>
+                      <div class="w-full bg-stone-100 rounded-full h-2 overflow-hidden"><div id="rpt-progress-bar" class="bg-[#1f6f54] h-full rounded-full" style="width: 0%;"></div></div>
                       <p class="text-[9px] text-stone-500 mt-1 text-right"><span id="rpt-progress-baris">0</span> dari <span id="rpt-target-baris">300</span> baris</p>
                     </div>
                     <div>
-                      <div class="flex justify-between text-xs font-bold mb-1"><span>Target Sabqi</span><span id="rpt-murojaah-progress-text" class="text-indigo-600">0%</span></div>
-                      <div class="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden"><div id="rpt-murojaah-bar" class="bg-indigo-500 h-full rounded-full" style="width: 0%;"></div></div>
+                      <div class="flex justify-between text-[11px] font-bold mb-1"><span>Target Sabqi</span><span id="rpt-murojaah-progress-text" class="text-indigo-600">0%</span></div>
+                      <div class="w-full bg-stone-100 rounded-full h-2 overflow-hidden"><div id="rpt-murojaah-bar" class="bg-indigo-500 h-full rounded-full" style="width: 0%;"></div></div>
                       <p class="text-[9px] text-stone-500 mt-1 text-right"><span id="rpt-murojaah-baris">0</span> dari <span id="rpt-murojaah-target-baris">300</span> baris</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Grid 2: Capaian & Kualitas -->
-                <div class="grid grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <h3 class="text-[11px] font-bold uppercase tracking-wider mb-3 text-stone-500">Capaian Hafalan Baru</h3>
-                    <div class="grid grid-cols-2 gap-3 h-[130px]">
-                      <div class="border border-stone-200 rounded-xl p-3 flex flex-col justify-center bg-[#fcfaf5]">
-                        <p class="text-[9px] font-bold text-stone-500 uppercase mb-1"><i data-lucide="map-pin" style="width:10px;height:10px" class="inline"></i> Batas Awal</p>
-                        <p id="rpt-batas-awal" class="text-xs font-bold leading-tight mb-2">—</p>
-                        <p class="text-[9px] font-bold text-stone-500 uppercase mb-1"><i data-lucide="flag" style="width:10px;height:10px" class="inline"></i> Batas Akhir</p>
-                        <p id="rpt-batas-akhir" class="text-xs font-bold leading-tight">—</p>
+                <div class="grid grid-cols-2 gap-4 mb-4 flex-1">
+                  <div class="flex flex-col">
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider mb-2 text-stone-500">Capaian Hafalan Baru</h3>
+                    <div class="grid grid-cols-2 gap-2 flex-1">
+                      <div class="border border-stone-200 rounded-xl p-2.5 flex flex-col justify-center bg-[#fcfaf5]">
+                        <p class="text-[8px] font-bold text-stone-500 uppercase mb-0.5"><i data-lucide="map-pin" style="width:8px;height:8px" class="inline"></i> Batas Awal</p>
+                        <p id="rpt-batas-awal" class="text-[11px] font-bold leading-tight mb-1.5">—</p>
+                        <p class="text-[8px] font-bold text-stone-500 uppercase mb-0.5"><i data-lucide="flag" style="width:8px;height:8px" class="inline"></i> Batas Akhir</p>
+                        <p id="rpt-batas-akhir" class="text-[11px] font-bold leading-tight">—</p>
                       </div>
-                      <div class="border border-emerald-200 rounded-xl bg-[#e2f4e8] p-3 flex flex-col justify-center items-center text-center">
-                        <p class="text-[10px] font-bold text-emerald-800 uppercase">Total Disetorkan</p>
-                        <p id="rpt-total-baris" class="text-3xl font-bold text-[#1f6f54] my-1">—</p>
-                        <p class="text-[10px] font-bold text-emerald-700 uppercase">Baris</p>
+                      <div class="border border-emerald-200 rounded-xl bg-[#e2f4e8] p-2.5 flex flex-col justify-center items-center text-center">
+                        <p class="text-[9px] font-bold text-emerald-800 uppercase">Total Disetorkan</p>
+                        <p id="rpt-total-baris" class="text-2xl font-bold text-[#1f6f54] my-0.5">—</p>
+                        <p class="text-[9px] font-bold text-emerald-700 uppercase">Baris</p>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <h3 class="text-[11px] font-bold uppercase tracking-wider mb-3 text-stone-500">Peta Kualitas Hafalan</h3>
-                    <div class="grid grid-cols-2 gap-3 h-[130px]">
-                      <div class="border border-emerald-200 bg-[#e2f4e8] rounded-xl p-3 overflow-y-auto">
-                        <p class="text-[10px] font-bold text-emerald-800 mb-1 border-b border-emerald-200 pb-1"><i data-lucide="shield-check" style="width:12px;height:12px" class="inline"></i> Hafalan Kuat</p>
-                        <ul id="rpt-hafalan-kuat" class="text-[10px] text-emerald-900 space-y-1 list-disc list-inside mt-1"></ul>
+                  <div class="flex flex-col">
+                    <h3 class="text-[10px] font-bold uppercase tracking-wider mb-2 text-stone-500">Peta Kualitas Hafalan</h3>
+                    <div class="grid grid-cols-2 gap-2 flex-1">
+                      <!-- Di sini saya batasi tingginya agar tidak meluber ke halaman 2 -->
+                      <div class="border border-emerald-200 bg-[#e2f4e8] rounded-xl p-2 h-[110px] overflow-hidden relative">
+                        <p class="text-[9px] font-bold text-emerald-800 mb-1 border-b border-emerald-200 pb-1"><i data-lucide="shield-check" style="width:10px;height:10px" class="inline"></i> Hafalan Kuat</p>
+                        <ul id="rpt-hafalan-kuat" class="text-[9px] text-emerald-900 space-y-0.5 list-disc list-inside leading-tight"></ul>
+                        <div class="absolute bottom-0 left-0 w-full h-6 bg-gradient-to-t from-[#e2f4e8] to-transparent"></div>
                       </div>
-                      <div class="border border-rose-200 bg-[#ffe9e2] rounded-xl p-3 overflow-y-auto">
-                        <p class="text-[10px] font-bold text-rose-800 mb-1 border-b border-rose-200 pb-1"><i data-lucide="shield-alert" style="width:12px;height:12px" class="inline"></i> Perlu Penguatan</p>
-                        <ul id="rpt-hafalan-lemah" class="text-[10px] text-rose-900 space-y-1 list-disc list-inside mt-1"></ul>
+                      <div class="border border-rose-200 bg-[#ffe9e2] rounded-xl p-2 h-[110px] overflow-hidden relative">
+                        <p class="text-[9px] font-bold text-rose-800 mb-1 border-b border-rose-200 pb-1"><i data-lucide="shield-alert" style="width:10px;height:10px" class="inline"></i> Perlu Penguatan</p>
+                        <ul id="rpt-hafalan-lemah" class="text-[9px] text-rose-900 space-y-0.5 list-disc list-inside leading-tight"></ul>
+                        <div class="absolute bottom-0 left-0 w-full h-6 bg-gradient-to-t from-[#ffe9e2] to-transparent"></div>
                       </div>
                     </div>
                   </div>
@@ -620,17 +623,17 @@
 
                 <!-- Ujian Section -->
                 <div id="rpt-exam-section" class="hidden mt-auto">
-                  <h3 class="text-[11px] font-bold uppercase tracking-wider mb-3 text-stone-500">Hasil Ujian (UTS/UAS)</h3>
+                  <h3 class="text-[10px] font-bold uppercase tracking-wider mb-2 text-stone-500">Hasil Ujian (UTS/UAS)</h3>
                   <div id="rpt-exam-container" class="grid grid-cols-2 gap-3"></div>
                 </div>
               </div>
 
               <!-- ================= HALAMAN 2 ================= -->
-              <div class="page-break p-10 h-[297mm] flex flex-col" style="box-sizing: border-box;">
-                <div class="border-b-2 border-[#1f6f54] pb-3 mb-5 flex justify-between items-end">
+              <div class="page-break p-6 h-[297mm] flex flex-col" style="box-sizing: border-box; width: 210mm; max-width: 100%;">
+                <div class="border-b-2 border-[#1f6f54] pb-2 mb-4 flex justify-between items-end">
                   <div>
-                    <h2 class="text-xl font-bold text-[#1f6f54]">Jurnal Setoran Hafalan</h2>
-                    <p class="text-sm text-stone-500">10 Setoran Terakhir</p>
+                    <h2 class="text-lg font-bold text-[#1f6f54]">Jurnal Setoran Hafalan</h2>
+                    <p class="text-xs text-stone-500">10 Setoran Terakhir</p>
                   </div>
                   <div class="text-right">
                     <p class="text-sm font-bold text-stone-800" id="report-student-name-p2">—</p>
@@ -638,25 +641,29 @@
                   </div>
                 </div>
 
-                <div class="border border-stone-200 rounded-xl overflow-hidden flex-1">
+                <div class="border border-stone-200 rounded-xl overflow-hidden mb-4">
                   <table class="w-full text-left text-sm">
                     <thead class="bg-[#f3eee2] text-[#4a4436]">
                       <tr>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-center w-24">Tanggal</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-center w-24">Kategori</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-center w-24">Predikat</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-center w-16">Juz</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-wider">Surah / Hal</th>
-                        <th class="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-right w-16">Baris</th>
+                        <th class="px-3 py-2 font-semibold text-[10px] uppercase tracking-wider text-center w-20">Tanggal</th>
+                        <th class="px-3 py-2 font-semibold text-[10px] uppercase tracking-wider text-center w-20">Kategori</th>
+                        <th class="px-3 py-2 font-semibold text-[10px] uppercase tracking-wider text-center w-20">Predikat</th>
+                        <th class="px-3 py-2 font-semibold text-[10px] uppercase tracking-wider text-center w-12">Juz</th>
+                        <th class="px-3 py-2 font-semibold text-[10px] uppercase tracking-wider">Surah / Hal</th>
+                        <th class="px-3 py-2 font-semibold text-[10px] uppercase tracking-wider text-right w-12">Baris</th>
                       </tr>
                     </thead>
                     <tbody id="rpt-history-body" class="divide-y divide-stone-100"></tbody>
                   </table>
                 </div>
                 
-                <div class="mt-8 pt-4 border-t border-stone-200 text-xs text-stone-500 flex justify-between">
+                <!-- Footer Tanda Tangan -->
+                <div class="mt-auto pt-4 border-t border-stone-200 text-xs text-stone-500 flex justify-between items-end">
                   <p>Dicetak pada: <span id="rpt-print-date">—</span></p>
-                  <p>Tanda Tangan Guru Pengampu: ____________________</p>
+                  <div class="text-center">
+                    <p class="mb-12">Tanda Tangan Guru Pengampu,</p>
+                    <p class="font-bold border-t border-stone-400 px-8 pt-1 text-stone-800">_________________________</p>
+                  </div>
                 </div>
               </div>
 
@@ -1225,21 +1232,21 @@
 </template>
 
 <template id="rpt-exam-card-template">
-  <div class="metric-card rounded-xl bg-white p-3 border-[#d8e5dd]">
+  <div class="metric-card rounded-xl bg-white p-2.5 border-[#d8e5dd]">
     <div class="flex justify-between items-start mb-1">
       <p class="exam-title text-[10px] font-bold text-[#1f6f54] uppercase tracking-wider mb-1"></p>
       <p class="exam-date text-[9px] text-stone-400"></p>
     </div>
-    <div class="flex justify-between items-end border-b border-stone-100 pb-2 mb-2">
-      <p class="exam-score text-3xl font-bold leading-none text-stone-800"></p>
-      <p class="exam-predicate text-[11px] font-bold px-2 py-1 rounded bg-amber-50 text-amber-700 uppercase"></p>
+    <div class="flex justify-between items-end border-b border-stone-100 pb-1.5 mb-1.5">
+      <p class="exam-score text-2xl font-bold leading-none text-stone-800"></p>
+      <p class="exam-predicate text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 uppercase"></p>
     </div>
-    <div class="grid grid-cols-3 gap-1 text-center mb-2">
-      <div><p class="text-[8px] text-stone-500 uppercase">Kelancaran</p><p class="exam-kel text-[11px] font-bold"></p></div>
-      <div><p class="text-[8px] text-stone-500 uppercase">Tajwid</p><p class="exam-taj text-[11px] font-bold"></p></div>
-      <div><p class="text-[8px] text-stone-500 uppercase">Fashahah</p><p class="exam-fas text-[11px] font-bold"></p></div>
+    <div class="grid grid-cols-3 gap-1 text-center mb-1">
+      <div><p class="text-[7px] text-stone-500 uppercase">Kelancaran</p><p class="exam-kel text-[10px] font-bold"></p></div>
+      <div><p class="text-[7px] text-stone-500 uppercase">Tajwid</p><p class="exam-taj text-[10px] font-bold"></p></div>
+      <div><p class="text-[7px] text-stone-500 uppercase">Fashahah</p><p class="exam-fas text-[10px] font-bold"></p></div>
     </div>
-    <p class="exam-note text-[9px] text-stone-500 leading-tight italic"></p>
+    <p class="exam-note text-[8px] text-stone-500 leading-tight italic truncate"></p>
   </div>
 </template>
 
