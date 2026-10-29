@@ -694,19 +694,140 @@ if (byId("export-csv-btn")) byId("export-csv-btn").addEventListener("click", () 
 });
 
 if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("click", () => {
-  const nama = byId("laporan-siswa").value; if (!nama) { byId("report-poster-wrapper").classList.add("hidden"); byId("print-rapor-btn").classList.add("hidden"); return; } const targetZiyadah = Number(byId("laporan-target").value) || 1; const targetMurojaah = Number(byId("laporan-hafalan-saat-ini").value) || 1; const start = byId("laporan-start").value, end = byId("laporan-end").value; const student = studentList().find(s => s.nama === nama); const all = (window.records || []).filter(r => r.nama_santri === nama && (!start || dateKey(r.tanggal) >= start) && (!end || dateKey(r.tanggal) <= end));
-  const hadir = all.filter(r => (r.kehadiran === "Hadir" || r.tipe === "setoran_kehadiran") && r.tipe !== "ujian_semester").length; const sakit = all.filter(r => r.kehadiran === "Sakit").length; const izin = all.filter(r => r.kehadiran === "Izin").length; const alfa = all.filter(r => r.kehadiran === "Alfa").length; const total = hadir + sakit + izin + alfa; const pct = total ? Math.round(hadir / total * 100) : 0;
-  byId("rpt-attendance-percent").textContent = pct + "%"; byId("rpt-hadir").textContent = hadir; byId("rpt-sakit").textContent = sakit; byId("rpt-izin").textContent = izin; byId("rpt-alfa").textContent = alfa; byId("report-student-name").textContent = nama; byId("report-student-meta").textContent = `${getHalaqahName(student)} · Kelas ${student?.kelas || ""}`; byId("report-period-text").textContent = `${start || "Awal"} — ${end || "Sekarang"}`;
-  const allSetor = all.filter(r => r.tipe === "setoran_kehadiran").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); const ziyadahAsc = [...allSetor].filter(r => parseCat(r.evaluasi) === "Sabaq").sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal)); const murojaah = allSetor.filter(r => parseCat(r.evaluasi) === "Sabqi"); const firstZ = ziyadahAsc[0], lastZ = ziyadahAsc[ziyadahAsc.length - 1];
-  const formatLoc = z => !z ? "—" : z.juz?.startsWith("Iqra") ? `${z.juz} Hal ${z.surah}` : `Juz ${z.juz} - ${z.surah} (${z.ayat})`; byId("rpt-batas-awal").textContent = formatLoc(firstZ); byId("rpt-batas-akhir").textContent = formatLoc(lastZ);
-  const totalZ = ziyadahAsc.reduce((s, r) => s + (Number(r.jumlah_baris) || 0), 0); const targetZ = targetZiyadah * 300; let pctZ = Math.round((totalZ / targetZ) * 100); if (pctZ > 100) pctZ = 100; byId("rpt-target-text").textContent = `${targetZiyadah} Juz`; byId("rpt-progress-text").textContent = `${pctZ}%`; byId("rpt-progress-bar").style.width = `${pctZ}%`; byId("rpt-progress-baris").textContent = totalZ; byId("rpt-target-baris").textContent = targetZ; byId("rpt-total-baris").textContent = totalZ;
-  const totalM = murojaah.reduce((s, r) => s + (Number(r.jumlah_baris) || 0), 0); const targetM = targetMurojaah * 300; let pctM = Math.round((totalM / targetM) * 100); if (pctM > 100) pctM = 100; byId("rpt-murojaah-target-text").textContent = `${targetMurojaah} Juz`; byId("rpt-murojaah-progress-text").textContent = `${pctM}%`; byId("rpt-murojaah-bar").style.width = `${pctM}%`; byId("rpt-murojaah-baris").textContent = totalM; byId("rpt-murojaah-target-baris").textContent = targetM;
-  const mapHafalan = new Map(); [...allSetor].reverse().forEach(r => { const isIqra = r.juz?.startsWith("Iqra"); const loc = `${isIqra ? r.juz : 'Juz ' + (r.juz || '')} - ${r.surah} ${r.ayat ? `(Ayat ${r.ayat})` : ''}`; mapHafalan.set(loc, r.status); });
-  const lstK = byId("rpt-hafalan-kuat"); lstK.innerHTML = ""; const lstL = byId("rpt-hafalan-lemah"); lstL.innerHTML = ""; let hasK = false, hasL = false; mapHafalan.forEach((status, loc) => { if (status === "Lancar") { hasK = true; lstK.innerHTML += `<li>${esc(loc)}</li>`; } else { hasL = true; lstL.innerHTML += `<li>${esc(loc)}</li>`; } }); if (!hasK) lstK.innerHTML = `<li class="list-none text-emerald-700/50 italic">Belum ada data</li>`; if (!hasL) lstL.innerHTML = `<li class="list-none text-rose-700/50 italic">Aman / Tidak ada</li>`;
-  const allUjian = all.filter(r => r.tipe === "ujian_semester").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); const examContainer = byId("rpt-exam-container"); examContainer.innerHTML = "";
-  if (allUjian.length > 0) { byId("rpt-exam-section").classList.remove("hidden"); allUjian.forEach(u => { const node = byId("rpt-exam-card-template").content.cloneNode(true); node.querySelector(".exam-title").textContent = u.surah; node.querySelector(".exam-date").textContent = new Date(u.tanggal).toLocaleDateString("id-ID", {day: '2-digit', month: 'short', year: 'numeric'}); node.querySelector(".exam-score").textContent = u.ayat; const pred = node.querySelector(".exam-predicate"); pred.textContent = u.status; if (u.status === "Roosib" || u.status === "Maqbuul") pred.className = "exam-predicate text-[11px] font-bold px-2 py-1 rounded bg-rose-50 text-rose-700 uppercase"; else if (u.status.includes("Jayyid")) pred.className = "exam-predicate text-[11px] font-bold px-2 py-1 rounded bg-emerald-50 text-emerald-700 uppercase"; else pred.className = "exam-predicate text-[11px] font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-700 uppercase"; node.querySelector(".exam-kel").textContent = u.juz; node.querySelector(".exam-taj").textContent = u.jumlah_baris; const parts = (u.evaluasi || "").split("| Fashahah:"); node.querySelector(".exam-fas").textContent = parts.length > 1 ? parts[1].trim() : "-"; node.querySelector(".exam-note").textContent = `Catatan: ${parts[0].trim()}`; examContainer.appendChild(node); }); } else { byId("rpt-exam-section").classList.add("hidden"); }
-  const body = byId("rpt-history-body"); body.innerHTML = ""; allSetor.slice(0, 10).forEach(r => { const tr = document.createElement("tr"); const cat = parseCat(r.evaluasi); const catColor = cat === "Sabaq" ? "text-emerald-700 font-bold" : cat === "Sabqi" ? "text-amber-700 font-bold" : "text-indigo-600 font-bold"; const stsColor = r.status === "Lancar" ? "text-emerald-700" : "text-rose-700"; tr.innerHTML = `<td class="px-4 py-3 text-[11px] border-b border-stone-100">${new Date(r.tanggal).toLocaleDateString("id-ID", {day: "2-digit", month: "short"})}</td><td class="px-4 py-3 text-[10px] uppercase tracking-wide border-b border-stone-100 ${catColor}">${cat}</td><td class="px-4 py-3 text-[11px] border-b border-stone-100 font-semibold ${stsColor}">${esc(r.status || "-")}</td><td class="px-4 py-3 text-[11px] border-b border-stone-100">${esc(r.juz || "-")}</td><td class="px-4 py-3 text-[11px] border-b border-stone-100">${esc(r.surah || "-")} : ${esc(r.ayat || "-")}</td><td class="px-4 py-3 text-[11px] font-bold border-b border-stone-100 text-right">${esc(r.jumlah_baris || "-")}</td>`; body.appendChild(tr); });
-  byId("report-poster-wrapper").classList.remove("hidden"); byId("print-rapor-btn").classList.remove("hidden"); byId("report-poster-wrapper").scrollIntoView({behavior: "smooth", block: "start"});
+  const nama = byId("laporan-siswa").value; 
+  if (!nama) { byId("report-poster-wrapper").classList.add("hidden"); byId("print-rapor-btn").classList.add("hidden"); return; } 
+  
+  const targetZiyadah = Number(byId("laporan-target").value) || 1; 
+  const targetMurojaah = Number(byId("laporan-hafalan-saat-ini").value) || 1; 
+  const start = byId("laporan-start").value, end = byId("laporan-end").value; 
+  const student = studentList().find(s => s.nama === nama); 
+  const all = (window.records || []).filter(r => r.nama_santri === nama && (!start || dateKey(r.tanggal) >= start) && (!end || dateKey(r.tanggal) <= end));
+
+  // --- HITUNG KEHADIRAN ---
+  const hadir = all.filter(r => (r.kehadiran === "Hadir" || r.tipe === "setoran_kehadiran") && r.tipe !== "ujian_semester").length; 
+  const sakit = all.filter(r => r.kehadiran === "Sakit").length; 
+  const izin = all.filter(r => r.kehadiran === "Izin").length; 
+  const alfa = all.filter(r => r.kehadiran === "Alfa").length; 
+  const total = hadir + sakit + izin + alfa; 
+  const pct = total ? Math.round(hadir / total * 100) : 0;
+  
+  byId("rpt-attendance-percent").textContent = pct + "%"; 
+  byId("rpt-hadir").textContent = hadir; 
+  byId("rpt-sakit").textContent = sakit; 
+  byId("rpt-izin").textContent = izin; 
+  byId("rpt-alfa").textContent = alfa; 
+  
+  byId("report-student-name").textContent = nama; 
+  byId("report-student-meta").textContent = `${getHalaqahName(student)} · Kelas ${student?.kelas || ""}`; 
+  byId("report-period-text").textContent = `${start || "Awal"} — ${end || "Sekarang"}`;
+  
+  byId("report-student-name-p2").textContent = nama;
+  byId("report-student-meta-p2").textContent = `${getHalaqahName(student)} · Kelas ${student?.kelas || ""}`;
+  byId("rpt-print-date").textContent = new Date().toLocaleDateString("id-ID", {day: 'numeric', month: 'long', year: 'numeric'});
+
+  // --- HITUNG PROGRES SABAQ & SABQI ---
+  const allSetor = all.filter(r => r.tipe === "setoran_kehadiran").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); 
+  const ziyadahAsc = [...allSetor].filter(r => parseCat(r.evaluasi) === "Sabaq").sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal)); 
+  const murojaah = allSetor.filter(r => parseCat(r.evaluasi) === "Sabqi"); 
+  const firstZ = ziyadahAsc[0], lastZ = ziyadahAsc[ziyadahAsc.length - 1];
+  
+  const formatLoc = z => !z ? "—" : z.juz?.startsWith("Iqra") ? `${z.juz} Hal ${z.surah}` : `Juz ${z.juz} - ${z.surah} (${z.ayat})`; 
+  byId("rpt-batas-awal").textContent = formatLoc(firstZ); 
+  byId("rpt-batas-akhir").textContent = formatLoc(lastZ);
+  
+  const totalZ = ziyadahAsc.reduce((s, r) => s + (Number(r.jumlah_baris) || 0), 0); 
+  const targetZ = targetZiyadah * 300; 
+  let pctZ = Math.round((totalZ / targetZ) * 100); if (pctZ > 100) pctZ = 100; 
+  byId("rpt-progress-text").textContent = `${pctZ}%`; 
+  byId("rpt-progress-bar").style.width = `${pctZ}%`; 
+  byId("rpt-progress-baris").textContent = totalZ; 
+  byId("rpt-target-baris").textContent = targetZ; 
+  byId("rpt-total-baris").textContent = totalZ;
+  
+  const totalM = murojaah.reduce((s, r) => s + (Number(r.jumlah_baris) || 0), 0); 
+  const targetM = targetMurojaah * 300; 
+  let pctM = Math.round((totalM / targetM) * 100); if (pctM > 100) pctM = 100; 
+  byId("rpt-murojaah-progress-text").textContent = `${pctM}%`; 
+  byId("rpt-murojaah-bar").style.width = `${pctM}%`; 
+  byId("rpt-murojaah-baris").textContent = totalM; 
+  byId("rpt-murojaah-target-baris").textContent = targetM;
+
+  // --- PETA KUALITAS HAFALAN ---
+  const mapHafalan = new Map(); 
+  [...allSetor].reverse().forEach(r => { 
+    const isIqra = r.juz?.startsWith("Iqra"); 
+    const loc = `${isIqra ? r.juz : 'Juz ' + (r.juz || '')} - ${r.surah} ${r.ayat ? `(Ayat ${r.ayat})` : ''}`; 
+    mapHafalan.set(loc, r.status); 
+  });
+  
+  const lstK = byId("rpt-hafalan-kuat"); 
+  lstK.innerHTML = ""; 
+  const lstL = byId("rpt-hafalan-lemah"); 
+  lstL.innerHTML = ""; 
+  let hasK = false, hasL = false; 
+  
+  mapHafalan.forEach((status, loc) => { 
+    if (status === "Lancar") { hasK = true; lstK.innerHTML += `<li>${esc(loc)}</li>`; } 
+    else { hasL = true; lstL.innerHTML += `<li>${esc(loc)}</li>`; } 
+  }); 
+  
+  if (!hasK) lstK.innerHTML = `<li class="list-none opacity-50 italic">Belum ada data</li>`; 
+  if (!hasL) lstL.innerHTML = `<li class="list-none opacity-50 italic">Aman / Tidak ada</li>`;
+
+  // --- RENDER UJIAN ---
+  const allUjian = all.filter(r => r.tipe === "ujian_semester").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); 
+  const examContainer = byId("rpt-exam-container"); 
+  examContainer.innerHTML = "";
+  
+  if (allUjian.length > 0) { 
+    byId("rpt-exam-section").classList.remove("hidden"); 
+    allUjian.forEach(u => { 
+      const node = byId("rpt-exam-card-template").content.cloneNode(true); 
+      node.querySelector(".exam-title").textContent = u.surah; 
+      node.querySelector(".exam-date").textContent = new Date(u.tanggal).toLocaleDateString("id-ID", {day: '2-digit', month: 'short', year: 'numeric'}); 
+      node.querySelector(".exam-score").textContent = u.ayat; 
+      const pred = node.querySelector(".exam-predicate"); 
+      pred.textContent = u.status; 
+      if (u.status === "Roosib" || u.status === "Maqbuul") pred.className = "exam-predicate text-[10px] font-bold px-2 py-1 rounded bg-rose-50 text-rose-700 uppercase"; 
+      else if (u.status.includes("Jayyid")) pred.className = "exam-predicate text-[10px] font-bold px-2 py-1 rounded bg-emerald-50 text-emerald-700 uppercase"; 
+      else pred.className = "exam-predicate text-[10px] font-bold px-2 py-1 rounded bg-indigo-50 text-indigo-700 uppercase"; 
+      
+      node.querySelector(".exam-kel").textContent = u.juz; 
+      node.querySelector(".exam-taj").textContent = u.jumlah_baris; 
+      const parts = (u.evaluasi || "").split("| Fashahah:"); 
+      node.querySelector(".exam-fas").textContent = parts.length > 1 ? parts[1].trim() : "-"; 
+      examContainer.appendChild(node); 
+    }); 
+  } else { 
+    byId("rpt-exam-section").classList.add("hidden"); 
+  }
+
+  // --- RENDER TABEL JURNAL (Halaman 2) ---
+  const body = byId("rpt-history-body"); 
+  body.innerHTML = ""; 
+  allSetor.slice(0, 10).forEach(r => { 
+    const tr = document.createElement("tr"); 
+    const cat = parseCat(r.evaluasi); 
+    const catColor = cat === "Sabaq" ? "text-emerald-700 font-bold" : cat === "Sabqi" ? "text-amber-700 font-bold" : "text-indigo-600 font-bold"; 
+    const stsColor = r.status === "Lancar" ? "text-emerald-700" : "text-rose-700"; 
+    tr.innerHTML = `
+      <td class="px-4 py-3 text-xs text-center">${new Date(r.tanggal).toLocaleDateString("id-ID", {day: "2-digit", month: "short"})}</td>
+      <td class="px-4 py-3 text-[10px] uppercase text-center ${catColor}">${cat}</td>
+      <td class="px-4 py-3 text-xs text-center font-semibold ${stsColor}">${esc(r.status || "-")}</td>
+      <td class="px-4 py-3 text-xs text-center">${esc(r.juz || "-")}</td>
+      <td class="px-4 py-3 text-xs">${esc(r.surah || "-")} : ${esc(r.ayat || "-")}</td>
+      <td class="px-4 py-3 text-xs font-bold text-right">${esc(r.jumlah_baris || "-")}</td>
+    `; 
+    body.appendChild(tr); 
+  });
+  
+  if (allSetor.length === 0) {
+      body.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-stone-500">Belum ada data setoran.</td></tr>`;
+  }
+
+  byId("report-poster-wrapper").classList.remove("hidden"); 
+  byId("print-rapor-btn").classList.remove("hidden"); 
+  byId("report-poster-wrapper").scrollIntoView({behavior: "smooth", block: "start"});
 });
 if (byId("print-rapor-btn")) byId("print-rapor-btn").addEventListener("click", () => { document.body.classList.add("print-mode-rapor"); setTimeout(() => { window.print(); document.body.classList.remove("print-mode-rapor"); }, 300); });
 
