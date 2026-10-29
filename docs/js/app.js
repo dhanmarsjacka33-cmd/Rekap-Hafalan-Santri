@@ -1730,8 +1730,8 @@ if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("c
   byId("report-student-meta").textContent = `${getHalaqahName(student)} · Kelas ${student?.kelas || ""}`;
   byId("report-period-text").textContent = `${start || "Awal"} — ${end || "Sekarang"}`;
 
-  byId("report-student-name-p2").textContent = nama;
-  byId("report-student-meta-p2").textContent = `${getHalaqahName(student)} · Kelas ${student?.kelas || ""}`;
+  if (byId("report-student-name-p2")) byId("report-student-name-p2").textContent = nama;
+  if (byId("report-student-meta-p2")) byId("report-student-meta-p2").textContent = `${getHalaqahName(student)} · Kelas ${student?.kelas || ""}`;
   byId("rpt-print-date").textContent = new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' });
 
   const allSetor = all.filter(r => r.tipe === "setoran_kehadiran").sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
