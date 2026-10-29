@@ -843,17 +843,23 @@ if (byId("print-rapor-btn")) byId("print-rapor-btn").addEventListener("click", (
     @page { size: A4 portrait; margin: 0; }
     #print-area { width: 210mm; background: white; }
     .page-break {
-      width: 210mm;
-      min-height: 260mm;
-      padding: 10mm;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      background: white;
+      width: 210mm !important;
+      height: 296mm !important;
+      min-height: 296mm !important;
+      max-height: 296mm !important;
+      padding: 10mm !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: white !important;
       page-break-after: always;
       break-after: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .page-break:last-child { page-break-after: auto; break-after: auto; }
+    #rpt-exam-section { margin-top: auto !important; }
     @media screen {
       body { background: #e5e5e5; padding: 20px; }
       #print-area { margin: 0 auto; }
