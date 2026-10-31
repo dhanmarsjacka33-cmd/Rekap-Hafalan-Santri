@@ -687,6 +687,7 @@ if (byId("export-csv-btn")) byId("export-csv-btn").addEventListener("click", () 
 });
 
 if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("click", () => {
+  try {
   const nama = byId("laporan-siswa").value; 
   if (!nama) { byId("report-poster-wrapper").classList.add("hidden"); byId("print-rapor-btn").classList.add("hidden"); return; } 
   
@@ -694,6 +695,10 @@ if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("c
   const targetMurojaah = Number(byId("laporan-hafalan-saat-ini").value) || 1; 
   const start = byId("laporan-start").value, end = byId("laporan-end").value; 
   const student = studentList().find(s => s.nama === nama); 
+  if (!student) {
+    alert("❌ Santri '" + nama + "' tidak ditemukan di master.");
+    return;
+  }
   const all = (window.records || []).filter(r => r.nama_santri === nama && (!start || dateKey(r.tanggal) >= start) && (!end || dateKey(r.tanggal) <= end));
 
   const hadir = all.filter(r => (r.kehadiran === "Hadir" || r.tipe === "setoran_kehadiran") && r.tipe !== "ujian_semester").length; 
@@ -813,7 +818,14 @@ if (byId("generate-report-btn")) byId("generate-report-btn").addEventListener("c
 
   byId("report-poster-wrapper").classList.remove("hidden"); 
   byId("print-rapor-btn").classList.remove("hidden"); 
-  byId("report-poster-wrapper").scrollIntoView({behavior: "smooth", block: "start"});
+  setTimeout(() => {
+    byId("report-poster-wrapper").scrollIntoView({behavior: "auto", block: "start"});
+  }, 100);
+  alert("✅ Rapor berhasil dibuat!\n\nScroll ke bawah untuk lihat preview, lalu klik 'Cetak Rapor'.");
+  } catch (err) {
+    console.error(err);
+    alert("❌ ERROR:\n" + err.message + "\n\n" + (err.stack || ""));
+  }
 });
 if (byId("print-rapor-btn")) byId("print-rapor-btn").addEventListener("click", () => {
   const printArea = byId("print-area");
