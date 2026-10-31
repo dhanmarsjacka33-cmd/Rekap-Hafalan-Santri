@@ -86,7 +86,7 @@
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div><p class="text-[10px] tracking-[.2em] font-bold uppercase mb-1.5 text-[#a3d9c9]">MANAJEMEN HAFALAN</p><h1 class="text-3xl font-bold">Rekap Hafalan Santri</h1></div>
       <div class="flex flex-col md:flex-row items-center gap-4">
-        <div class="flex items-center gap-3 bg-[#26372d] px-4 py-2 rounded-xl">
+        <div class="flex items-center justify-between w-full md:w-auto gap-3 bg-[#26372d] px-4 py-2 rounded-xl">
           <i data-lucide="user-circle" class="text-[#a3d9c9]"></i>
           <div><p id="user-name-display" class="text-sm font-bold leading-tight"></p><p id="user-role-display" class="text-[10px] text-stone-400 uppercase tracking-wide"></p></div>
           <button id="logout-btn" class="ml-2 text-stone-400 hover:text-rose-400 transition-colors" title="Logout"><i data-lucide="log-out" style="width:18px;height:18px"></i></button>
@@ -497,7 +497,7 @@
   <div class="canva-card relative w-full max-w-lg mx-auto rounded-2xl p-6 shadow-2xl modal-content">
     <div class="flex items-start justify-between gap-3 mb-5"><div><p class="text-xs uppercase tracking-[.14em] font-bold text-[#1f6f54]">MUTASI SANTRI</p><h2 class="text-xl font-semibold mt-1">Catat Kenaikan ke Tahfidz</h2></div><button id="close-mutasi-modal" type="button" class="rounded-lg p-2 hover:bg-stone-100"><i data-lucide="x" style="width:20px;height:20px"></i></button></div>
     <form id="mutasi-form" class="space-y-4">
-      <div><label class="block text-sm font-semibold mb-1" for="mutasi-siswa">Pilih Santri</label><select id="mutasi-siswa" class="field-input filter-select" required></select></div>
+      <div><label class="block text-sm font-semibold mb-1" for="mutasi-search">Cari Santri</label><input type="text" id="mutasi-search" class="field-input mb-2" placeholder="Ketik nama..."><select id="mutasi-siswa" class="field-input filter-select" required></select></div>
       <div class="grid grid-cols-2 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200"><div class="col-span-2 text-xs font-bold text-stone-500 uppercase">Informasi Asal</div><div><label class="block text-[11px] font-semibold mb-1">Kelas</label><input id="mutasi-kelas" type="text" class="field-input field-read" readonly></div><div><label class="block text-[11px] font-semibold mb-1">Halaqah</label><input id="mutasi-asal-halaqah" type="text" class="field-input field-read" readonly></div></div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-sm font-semibold mb-1" for="mutasi-tujuan-halaqah">Halaqah Tujuan</label><select id="mutasi-tujuan-halaqah" class="field-input filter-select" required></select></div><div><label class="block text-sm font-semibold mb-1" for="mutasi-tanggal">Tanggal</label><input id="mutasi-tanggal" type="date" class="field-input" required></div></div>
       <div><label class="block text-sm font-semibold mb-1">Pengampu Tujuan</label><input id="mutasi-tujuan-guru" type="text" class="field-input field-read" readonly></div>
@@ -586,10 +586,11 @@
   <article class="rounded-xl overflow-hidden shadow-lg border-2 border-amber-900/80 relative flex flex-col items-center p-4 text-center transform hover:scale-105 transition-all bg-amber-50" style="background: linear-gradient(180deg, #f3e5ab 0%, #e0c98b 100%);">
     <h3 class="text-2xl font-black text-amber-950 tracking-[0.2em] mb-2" style="font-family: 'Impact', sans-serif;">WANTED</h3>
     <div class="w-full h-32 bg-stone-200 border-4 border-amber-950 mb-2 flex flex-col items-center justify-center relative shadow-inner overflow-hidden"><img class="wanted-photo w-full h-full object-cover hidden" src="" alt="Buronan"><div class="wanted-placeholder flex flex-col items-center"><i data-lucide="user-minus" class="text-stone-400" style="width:40px;height:40px"></i><p class="text-[9px] text-stone-400 font-bold mt-1">NO PHOTO</p></div></div>
-    <p class="text-[10px] font-black text-amber-950 tracking-widest mt-1">DEAD OR ALIVE</p>
+    <p class="text-[11px] font-black text-amber-950 tracking-widest mt-1 uppercase">MOST WANTED</p>
+<p class="text-[10px] text-amber-900/70 mb-2 font-bold uppercase text-center">By Jannah</p>
     <p class="font-bold text-amber-950 uppercase text-base mt-0 mb-0 leading-tight wanted-name line-clamp-1 w-full"></p>
     <p class="text-[9px] text-amber-900/70 mb-2 wanted-meta font-bold"></p>
-    <div class="mt-2 bg-rose-700 w-full py-1.5 border border-rose-900 shadow-sm z-10 flex flex-col"><p class="text-[9px] text-rose-200 font-bold tracking-widest uppercase">MANGKIR SELAMA:</p><p class="text-lg text-white font-black tracking-widest uppercase wanted-days" style="font-family: 'Impact', sans-serif;"></p></div>
+    <div class="mt-2 bg-rose-700 w-full py-1.5 border border-rose-900 shadow-sm z-10 flex flex-col"><p class="text-[9px] text-rose-200 font-bold tracking-widest uppercase text-center leading-tight">Sudah ditunggu setoran selama:</p><p class="text-lg text-white font-black tracking-widest uppercase wanted-days" style="font-family: 'Impact', sans-serif;"></p></div>
   </article>
 </template>
 
