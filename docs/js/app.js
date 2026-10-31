@@ -370,7 +370,6 @@ function renderProgressionChart() {
 function renderLeaderboard() {
   const jenjangFilter = byId("leaderboard-jenjang").value; const h = byId("leaderboard-halaqah").value, k = byId("leaderboard-kelas").value; const start = byId("leaderboard-start").value, end = byId("leaderboard-end").value; const list = byId("leaderboard-list"); list.innerHTML = ""; currentLeaderboardData = []; const activeStudentNames = new Set(studentList().map(s => s.nama));
   const mutatedStudents = new Set((window.records || []).filter(r => r.tipe === "mutasi_tahfidz").map(r => r.nama_santri));
-  const mutatedStudents = new Set((window.records || []).filter(r => r.tipe === "mutasi_tahfidz").map(r => r.nama_santri));
   if (activeLeaderboardTab === "kandidat") {
     byId("add-kandidat-btn").classList.remove("hidden"); byId("filter-start-wrap").classList.add("hidden"); byId("filter-end-wrap").classList.add("hidden"); byId("filter-jenjang-wrap").classList.add("hidden");
     const kDatas = (window.records || []).filter(r => r.tipe === "kandidat_tes" && (!h || r.halaqah === h) && (!k || r.kelas === k)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); byId("leaderboard-empty").classList.toggle("hidden", kDatas.length > 0);
