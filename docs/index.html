@@ -169,6 +169,10 @@
             </div>
           </div>
           <div class="flex justify-end mb-3"><button id="add-kandidat-btn" type="button" class="hidden canva-button rounded-lg px-4 py-2 text-xs font-semibold inline-flex items-center gap-1.5 bg-indigo-600 shadow-sm"><i data-lucide="plus" style="width:14px;height:14px"></i> Input Kandidat Manual</button></div>
+          
+          <!-- HALL OF FAME -->
+          <div id="hall-of-fame" class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 hidden"></div>
+
           <div id="leaderboard-list" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4"></div>
           <p id="leaderboard-empty" class="text-stone-500 text-center py-8">Belum ada data untuk filter ini.</p>
         </section>
@@ -501,6 +505,10 @@
       <div class="grid grid-cols-2 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200"><div class="col-span-2 text-xs font-bold text-stone-500 uppercase">Informasi Asal</div><div><label class="block text-[11px] font-semibold mb-1">Kelas</label><input id="mutasi-kelas" type="text" class="field-input field-read" readonly></div><div><label class="block text-[11px] font-semibold mb-1">Halaqah</label><input id="mutasi-asal-halaqah" type="text" class="field-input field-read" readonly></div></div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="block text-sm font-semibold mb-1" for="mutasi-tujuan-halaqah">Halaqah Tujuan</label><select id="mutasi-tujuan-halaqah" class="field-input filter-select" required></select></div><div><label class="block text-sm font-semibold mb-1" for="mutasi-tanggal">Tanggal</label><input id="mutasi-tanggal" type="date" class="field-input" required></div></div>
       <div><label class="block text-sm font-semibold mb-1">Pengampu Tujuan</label><input id="mutasi-tujuan-guru" type="text" class="field-input field-read" readonly></div>
+      <div class="flex items-center gap-2 mt-2 bg-stone-50 p-3 rounded-xl border border-stone-200">
+        <input type="checkbox" id="mutasi-sudah-foto" class="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500 border-stone-300">
+        <label for="mutasi-sudah-foto" class="text-sm font-semibold text-stone-700 cursor-pointer select-none">Santri sudah foto pencapaian (fisik/kenang-kenangan)</label>
+      </div>
       <p id="mutasi-error" class="hidden text-sm text-red-700 rounded-lg bg-red-50 px-3 py-2"></p>
       <button id="mutasi-submit" type="submit" class="canva-button w-full rounded-lg py-3 font-semibold mt-2">Simpan Mutasi</button>
     </form>

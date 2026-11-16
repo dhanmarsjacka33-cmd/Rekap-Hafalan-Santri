@@ -388,6 +388,39 @@ function renderLeaderboard() {
       wantedList.slice(0, 16).forEach(item => { const node = byId("leaderboard-wanted-template").content.cloneNode(true); node.querySelector(".wanted-name").textContent = item.nama; node.querySelector(".wanted-meta").textContent = `${item.halaqah} · Kls ${item.kelas}`; const s = students.find(x => x.nama === item.nama); if (s && s.foto && s.foto.length > 100) { const img = node.querySelector(".wanted-photo"); img.src = s.foto; img.classList.remove("hidden"); node.querySelector(".wanted-placeholder").classList.add("hidden"); } node.querySelector(".wanted-days").textContent = `${item.daysMissed} HARI`; list.appendChild(node); currentLeaderboardData.push({...item, rank: "-", type: 'wanted'}); });
     }
   }
+
+  // Render Hall of Fame (Top 3)
+  const hofContainer = byId("hall-of-fame");
+  if (hofContainer) {
+    if (currentLeaderboardData.length > 0 && activeLeaderboardTab !== "kandidat") {
+      hofContainer.classList.remove("hidden");
+      const top3 = currentLeaderboardData.slice(0, 3);
+      let hofHtml = "";
+      top3.forEach((item, i) => {
+        const rankClass = i === 0 ? "bg-yellow-50 border-yellow-400" : i === 1 ? "bg-slate-50 border-slate-400" : "bg-orange-50 border-orange-400";
+        const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉";
+        let scoreText = "";
+        if (item.type === "quran") scoreText = `${item.baris} baris`;
+        else if (item.type === "iqra") scoreText = `Jilid ${item.maxJilid} Hal ${item.maxHalaman}`;
+        else if (item.type === "ujian") scoreText = `Nilai ${item.maxScore}`;
+        else if (item.type === "wanted") scoreText = `${item.daysMissed} Hari`;
+        
+        hofHtml += `
+          <div class="canva-card rounded-xl p-4 flex flex-col items-center justify-center text-center border-t-4 ${rankClass} shadow-md transform hover:scale-105 transition-transform">
+            <span class="text-4xl mb-2">${medal}</span>
+            <p class="font-bold text-lg leading-tight text-stone-800">${esc(item.nama)}</p>
+            <p class="text-xs text-stone-500 mt-1">${esc(item.halaqah)} · Kls ${esc(item.kelas)}</p>
+            <p class="mt-3 text-sm font-bold text-[#1f6f54]">${esc(scoreText)}</p>
+          </div>
+        `;
+      });
+      hofContainer.innerHTML = hofHtml;
+    } else {
+      hofContainer.classList.add("hidden");
+      hofContainer.innerHTML = "";
+    }
+  }
+
   if (window.lucide) lucide.createIcons();
 }
 
@@ -395,7 +428,13 @@ function renderHistory() {
   const h = byId("riwayat-filter-halaqah").value, k = byId("riwayat-filter-kelas").value, n = byId("riwayat-filter-nama").value; const allLogs = (window.records || []).filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester"); const filtered = allLogs.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k) && (!n || r.nama_santri === n)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); const list = byId("riwayat-list"); list.innerHTML = ""; byId("riwayat-empty").classList.toggle("hidden", filtered.length > 0);
   filtered.slice(0, 40).forEach(record => { const node = byId("history-row-template").content.cloneNode(true); node.querySelector(".history-name").textContent = record.nama_santri; const badge = node.querySelector(".history-badge"); const evNode = node.querySelector(".history-evaluation"); if (record.tipe === "setoran_kehadiran") { const cat = parseCat(record.evaluasi); const note = cleanEv(record.evaluasi); node.querySelector(".history-detail").textContent = `${record.halaqah} · Kls ${record.kelas} · Juz ${record.juz} · ${record.surah} : ${record.ayat} · ${record.jumlah_baris} baris`; if (note) { evNode.textContent = `Catatan: ${note}`; evNode.classList.remove("hidden"); } badge.textContent = cat; badge.style.cssText = cat === "Sabaq" ? "background:#dcefe3;color:#17633e" : cat === "Sabqi" ? "background:#fef3c7;color:#b45309" : "background:#e0e7ff;color:#3730a3"; } else if (record.tipe === "ujian_semester") { node.querySelector(".history-detail").textContent = `${record.halaqah} · Kls ${record.kelas} · ${record.surah}`; evNode.textContent = `${record.evaluasi} · Avg: ${record.ayat}`; evNode.classList.remove("hidden"); badge.textContent = record.status; badge.style.cssText = record.status.includes("Jayyid") || record.status === "Mumtaaz" ? "background:#fef3c7;color:#b45309" : "background:#fee2e2;color:#991b1b"; } else { node.querySelector(".history-detail").textContent = `${record.halaqah} · Kls ${record.kelas} · Presensi Harian`; badge.textContent = record.kehadiran; badge.style.cssText = record.kehadiran === "Hadir" ? "background:#dcefe3;color:#17633e" : record.kehadiran === "Izin" ? "background:#fff0cb;color:#8a6310" : "background:#f9ddda;color:#9c352a"; } node.querySelector(".history-date").textContent = new Date(record.tanggal).toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}); node.querySelector(".delete-record").addEventListener("click", e => deleteActivity(record, e.currentTarget)); list.appendChild(node); });
 }
-function renderMutasi() { const list = byId("mutasi-list"); list.innerHTML = ""; const activeStudentNames = new Set(studentList().map(s => s.nama)); const mutasiData = (window.records || []).filter(r => r.tipe === "mutasi_tahfidz" && activeStudentNames.has(r.nama_santri)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); byId("mutasi-empty").classList.toggle("hidden", mutasiData.length > 0); mutasiData.forEach(m => { const node = byId("mutasi-item-template").content.cloneNode(true); node.querySelector(".mutasi-name").textContent = m.nama_santri; node.querySelector(".mutasi-class").textContent = `Kelas ${m.kelas}`; node.querySelector(".mutasi-date").textContent = new Date(m.tanggal).toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}); node.querySelector(".mutasi-asal").textContent = `${m.halaqah} (${m.evaluasi})`; node.querySelector(".mutasi-tujuan").textContent = `${m.juz} (${m.surah})`; node.querySelector(".delete-mutasi").addEventListener("click", e => deleteActivity(m, e.currentTarget)); list.appendChild(node); }); }
+function renderMutasi() { const list = byId("mutasi-list"); list.innerHTML = ""; const activeStudentNames = new Set(studentList().map(s => s.nama)); const mutasiData = (window.records || []).filter(r => r.tipe === "mutasi_tahfidz" && activeStudentNames.has(r.nama_santri)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); byId("mutasi-empty").classList.toggle("hidden", mutasiData.length > 0); mutasiData.forEach(m => { const node = byId("mutasi-item-template").content.cloneNode(true); const nameEl = node.querySelector(".mutasi-name");
+nameEl.innerHTML = esc(m.nama_santri);
+if (m.status === 'Sudah Foto') {
+    nameEl.innerHTML += ` <i data-lucide="camera" class="text-emerald-600" style="width:14px;height:14px" title="Sudah Foto Pencapaian"></i>`;
+} else {
+    nameEl.innerHTML += ` <i data-lucide="camera-off" class="text-stone-400" style="width:14px;height:14px" title="Belum Foto"></i>`;
+} node.querySelector(".mutasi-class").textContent = `Kelas ${m.kelas}`; node.querySelector(".mutasi-date").textContent = new Date(m.tanggal).toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}); node.querySelector(".mutasi-asal").textContent = `${m.halaqah} (${m.evaluasi})`; node.querySelector(".mutasi-tujuan").textContent = `${m.juz} (${m.surah})`; node.querySelector(".delete-mutasi").addEventListener("click", e => deleteActivity(m, e.currentTarget)); list.appendChild(node); }); }
 function renderTeachers() { const list = byId("teacher-list"); list.innerHTML = ""; halaqahList().forEach(h => { const node = byId("teacher-item-template").content.cloneNode(true); node.querySelector(".teacher-halaqah").textContent = h.nama; node.querySelector(".teacher-name").textContent = h.guru; node.querySelector(".edit-teacher").addEventListener("click", () => openProfileModal("teacher", h)); node.querySelector(".delete-teacher").addEventListener("click", e => deleteTeacher(h, e.currentTarget)); list.appendChild(node); }); }
 function renderRekapBulanan() {
   const list = byId("rekap-grid-list"); list.innerHTML = ""; const bln = byId("rekap-bulan-input").value; const h = byId("rekap-halaqah").value, k = byId("rekap-kelas").value; if (!bln) { byId("rekap-grid-empty").textContent = "Pilih bulan."; byId("rekap-grid-empty").classList.remove("hidden"); return; } const students = studentList().filter(s => (!h || getHalaqahName(s) === h) && (!k || s.kelas === k)).sort((a, b) => a.nama.localeCompare(b.nama, "id")); if (students.length === 0) { byId("rekap-grid-empty").textContent = "Tidak ada santri."; byId("rekap-grid-empty").classList.remove("hidden"); return; } const acts = activityRecords().filter(r => r.tanggal && r.tanggal.startsWith(bln)); byId("rekap-grid-empty").classList.add("hidden");
@@ -661,7 +700,7 @@ if (byId("ujian-form")) byId("ujian-form").addEventListener("submit", async e =>
 });
 
 if (byId("add-mutasi-btn")) byId("add-mutasi-btn").addEventListener("click", () => { byId("mutasi-modal").classList.remove("hidden"); if(byId("mutasi-search")) byId("mutasi-search").value = ""; let sList = filteredStudents(); if (sList.length === 0) sList = studentList(); sList.sort((a, b) => a.nama.localeCompare(b.nama, "id")); clearSelect(byId("mutasi-siswa"), "-- Pilih Santri --"); sList.forEach(s => option(byId("mutasi-siswa"), s.nama, s.nama)); clearSelect(byId("mutasi-tujuan-halaqah"), "-- Pilih Halaqah Tujuan --"); halaqahList().forEach(h => option(byId("mutasi-tujuan-halaqah"), h.nama, h.nama)); });
-if (byId("close-mutasi-modal")) byId("close-mutasi-modal").addEventListener("click", () => { byId("mutasi-modal").classList.add("hidden"); byId("mutasi-form").reset(); });
+if (byId("close-mutasi-modal")) byId("close-mutasi-modal").addEventListener("click", () => { byId("mutasi-modal").classList.add("hidden"); byId("mutasi-form").reset(); if(byId("mutasi-sudah-foto")) byId("mutasi-sudah-foto").checked = false; });
 if (byId("mutasi-search")) byId("mutasi-search").addEventListener("input", (e) => {
   const q = e.target.value.toLowerCase().trim();
   const sel = byId("mutasi-siswa");
@@ -682,7 +721,8 @@ if (byId("mutasi-form")) byId("mutasi-form").addEventListener("submit", async e 
   const targetHalaqah = byId("mutasi-tujuan-halaqah").value; 
   const targetGuru = byId("mutasi-tujuan-guru").value; 
   const updRes = await window.dataSdk.updateSantri({ id: student.id, nama: student.nama, kelas: student.kelas, halaqah: targetHalaqah, foto: student.foto, status: 'Aktif', user: window.currentUser.username });
-  await window.dataSdk.create({ nama_santri: student.nama, kelas: student.kelas, halaqah: originHalaqah, evaluasi: originGuru, juz: targetHalaqah, surah: targetGuru, tanggal: getIsoForDate(byId("mutasi-tanggal").value), ayat: "", jumlah_baris: 0, status: "", tipe: "mutasi_tahfidz", kehadiran: "", user: window.currentUser.username }); btn.disabled = false;
+  const isFotoChecked = byId("mutasi-sudah-foto") ? byId("mutasi-sudah-foto").checked : false;
+  await window.dataSdk.create({ nama_santri: student.nama, kelas: student.kelas, halaqah: originHalaqah, evaluasi: originGuru, juz: targetHalaqah, surah: targetGuru, tanggal: getIsoForDate(byId("mutasi-tanggal").value), ayat: "", jumlah_baris: 0, status: isFotoChecked ? "Sudah Foto" : "Belum Foto", tipe: "mutasi_tahfidz", kehadiran: "", user: window.currentUser.username }); btn.disabled = false;
   if (updRes.isOk) { const kandidatRec = (window.records || []).find(r => r.tipe === "kandidat_tes" && r.nama_santri === student.nama); if (kandidatRec) await window.dataSdk.delete(kandidatRec); byId("mutasi-modal").classList.add("hidden"); e.target.reset(); if(byId("mutasi-search")) byId("mutasi-search").value = ""; showToast("Mutasi berhasil & kandidat dibersihkan"); renderAll(); } else { error.textContent = "Gagal memproses."; error.classList.remove("hidden"); }
 });
 

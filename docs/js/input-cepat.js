@@ -13,11 +13,11 @@ function renderInputCepat() {
     
     const hasSetoran = window.records.some(r => r.nama_santri === s.nama && r.tipe === "setoran_kehadiran" && dateKey(r.tanggal) === targetDate);
     const hasAbsen = window.records.find(r => r.nama_santri === s.nama && r.tipe === "kehadiran" && dateKey(r.tanggal) === targetDate);
-    const isAlfa = hasAbsen && hasAbsen.kehadiran === 'Alfa';
+    const isExcused = hasAbsen && ['Alfa', 'Izin', 'Sakit'].includes(hasAbsen.kehadiran);
 
-    if (filterMode === 'belum') return !hasSetoran && !isAlfa;
+    if (filterMode === 'belum') return !hasSetoran && !isExcused;
     if (filterMode === 'sudah') return hasSetoran;
-    if (filterMode === 'alfa') return isAlfa;
+    if (filterMode === 'alfa') return hasAbsen && hasAbsen.kehadiran === 'Alfa';
     return true;
   });
 
@@ -109,9 +109,15 @@ function renderInputCepat() {
 
     juzSel.addEventListener('change', () => {
        const j = juzSel.value;
-       surahSel.innerHTML = '<option value="">Surah</option>';
-       if (JUZ_MAPPING[j]) JUZ_MAPPING[j].forEach(item => surahSel.innerHTML += `<option value="${item[0]}">${item[0]}</option>`);
-       ayatInp.placeholder = "Ayat"; ayatInp.max = ""; ayatInp.value = "";
+       if (tipeSel.value === 'Iqra') {
+           surahSel.innerHTML = '<option value="">Halaman</option>';
+           for(let p=1; p<=32; p++) surahSel.innerHTML += `<option value="${p}">Hal ${p}</option>`;
+           ayatInp.value = "1"; ayatInp.disabled = true; ayatInp.max = ""; ayatInp.placeholder = "Ayat";
+       } else {
+           surahSel.innerHTML = '<option value="">Surah</option>';
+           if (JUZ_MAPPING[j]) JUZ_MAPPING[j].forEach(item => surahSel.innerHTML += `<option value="${item[0]}">${item[0]}</option>`);
+           ayatInp.placeholder = "Ayat"; ayatInp.max = ""; ayatInp.value = "";
+       }
     });
 
     surahSel.addEventListener('change', () => {
