@@ -428,13 +428,76 @@ function renderHistory() {
   const h = byId("riwayat-filter-halaqah").value, k = byId("riwayat-filter-kelas").value, n = byId("riwayat-filter-nama").value; const allLogs = (window.records || []).filter(r => r.tipe === "setoran_kehadiran" || r.tipe === "kehadiran" || r.tipe === "ujian_semester"); const filtered = allLogs.filter(r => (!h || r.halaqah === h) && (!k || r.kelas === k) && (!n || r.nama_santri === n)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); const list = byId("riwayat-list"); list.innerHTML = ""; byId("riwayat-empty").classList.toggle("hidden", filtered.length > 0);
   filtered.slice(0, 40).forEach(record => { const node = byId("history-row-template").content.cloneNode(true); node.querySelector(".history-name").textContent = record.nama_santri; const badge = node.querySelector(".history-badge"); const evNode = node.querySelector(".history-evaluation"); if (record.tipe === "setoran_kehadiran") { const cat = parseCat(record.evaluasi); const note = cleanEv(record.evaluasi); node.querySelector(".history-detail").textContent = `${record.halaqah} · Kls ${record.kelas} · Juz ${record.juz} · ${record.surah} : ${record.ayat} · ${record.jumlah_baris} baris`; if (note) { evNode.textContent = `Catatan: ${note}`; evNode.classList.remove("hidden"); } badge.textContent = cat; badge.style.cssText = cat === "Sabaq" ? "background:#dcefe3;color:#17633e" : cat === "Sabqi" ? "background:#fef3c7;color:#b45309" : "background:#e0e7ff;color:#3730a3"; } else if (record.tipe === "ujian_semester") { node.querySelector(".history-detail").textContent = `${record.halaqah} · Kls ${record.kelas} · ${record.surah}`; evNode.textContent = `${record.evaluasi} · Avg: ${record.ayat}`; evNode.classList.remove("hidden"); badge.textContent = record.status; badge.style.cssText = record.status.includes("Jayyid") || record.status === "Mumtaaz" ? "background:#fef3c7;color:#b45309" : "background:#fee2e2;color:#991b1b"; } else { node.querySelector(".history-detail").textContent = `${record.halaqah} · Kls ${record.kelas} · Presensi Harian`; badge.textContent = record.kehadiran; badge.style.cssText = record.kehadiran === "Hadir" ? "background:#dcefe3;color:#17633e" : record.kehadiran === "Izin" ? "background:#fff0cb;color:#8a6310" : "background:#f9ddda;color:#9c352a"; } node.querySelector(".history-date").textContent = new Date(record.tanggal).toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}); node.querySelector(".delete-record").addEventListener("click", e => deleteActivity(record, e.currentTarget)); list.appendChild(node); });
 }
-function renderMutasi() { const list = byId("mutasi-list"); list.innerHTML = ""; const activeStudentNames = new Set(studentList().map(s => s.nama)); const mutasiData = (window.records || []).filter(r => r.tipe === "mutasi_tahfidz" && activeStudentNames.has(r.nama_santri)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); byId("mutasi-empty").classList.toggle("hidden", mutasiData.length > 0); mutasiData.forEach(m => { const node = byId("mutasi-item-template").content.cloneNode(true); const nameEl = node.querySelector(".mutasi-name");
-nameEl.innerHTML = esc(m.nama_santri);
-if (m.status === 'Sudah Foto') {
-    nameEl.innerHTML += ` <i data-lucide="camera" class="text-emerald-600" style="width:14px;height:14px" title="Sudah Foto Pencapaian"></i>`;
-} else {
-    nameEl.innerHTML += ` <i data-lucide="camera-off" class="text-stone-400" style="width:14px;height:14px" title="Belum Foto"></i>`;
-} node.querySelector(".mutasi-class").textContent = `Kelas ${m.kelas}`; node.querySelector(".mutasi-date").textContent = new Date(m.tanggal).toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}); node.querySelector(".mutasi-asal").textContent = `${m.halaqah} (${m.evaluasi})`; node.querySelector(".mutasi-tujuan").textContent = `${m.juz} (${m.surah})`; node.querySelector(".delete-mutasi").addEventListener("click", e => deleteActivity(m, e.currentTarget)); list.appendChild(node); }); }
+function renderMutasi() {
+  const list = byId("mutasi-list"); list.innerHTML = ""; 
+  const activeStudentNames = new Set(studentList().map(s => s.nama)); 
+  const mutasiData = (window.records || []).filter(r => r.tipe === "mutasi_tahfidz" && activeStudentNames.has(r.nama_santri)).sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal)); 
+  byId("mutasi-empty").classList.toggle("hidden", mutasiData.length > 0); 
+
+  mutasiData.forEach(m => { 
+    const node = byId("mutasi-item-template").content.cloneNode(true); 
+    const nameEl = node.querySelector(".mutasi-name");
+    const isSudahFoto = m.status === 'Sudah Foto';
+    
+    nameEl.innerHTML = esc(m.nama_santri) + `
+      <button type="button" class="btn-toggle-foto ml-1.5 inline-flex items-center justify-center p-1 rounded hover:bg-stone-200 transition-colors" title="${isSudahFoto ? 'Klik untuk ubah ke Belum Foto' : 'Klik untuk ubah ke Sudah Foto'}">
+        <i data-lucide="${isSudahFoto ? 'camera' : 'camera-off'}" class="${isSudahFoto ? 'text-emerald-600' : 'text-stone-400'}" style="width:14px;height:14px"></i>
+      </button>
+    `;
+
+    node.querySelector(".mutasi-class").textContent = `Kelas ${m.kelas}`; 
+    node.querySelector(".mutasi-date").textContent = new Date(m.tanggal).toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}); 
+    node.querySelector(".mutasi-asal").textContent = `${m.halaqah} (${m.evaluasi})`; 
+    node.querySelector(".mutasi-tujuan").textContent = `${m.juz} (${m.surah})`; 
+    
+    // Event listener untuk Toggle Foto
+    node.querySelector(".btn-toggle-foto").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      const newStatus = isSudahFoto ? 'Belum Foto' : 'Sudah Foto';
+      
+      const payload = {
+        __backendId: m.__backendId,
+        nama_santri: m.nama_santri,
+        kelas: m.kelas,
+        halaqah: m.halaqah,
+        tanggal: m.tanggal,
+        juz: m.juz,
+        surah: m.surah,
+        ayat: m.ayat,
+        jumlah_baris: m.jumlah_baris,
+        status: newStatus, // Mengubah status di sini
+        evaluasi: m.evaluasi,
+        tipe: m.tipe,
+        kehadiran: m.kehadiran,
+        user: window.currentUser.username
+      };
+
+      try {
+        // Memanggil API updateRecord (pastikan ada di api.js)
+        const fn = window.dataSdk.updateRecord || window.dataSdk.update;
+        if (!fn) throw new Error("Fungsi update tidak ditemukan di api.js");
+        
+        const res = await fn(payload);
+        if (res.isOk) {
+          showToast(`Status diubah menjadi: ${newStatus}`);
+          m.status = newStatus; // Update data lokal agar langsung berubah
+          renderMutasi(); // Render ulang daftar
+        } else {
+          showToast(res.message || "Gagal mengubah status", true);
+        }
+      } catch(err) {
+        showToast(err.message || "Koneksi gagal", true);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    node.querySelector(".delete-mutasi").addEventListener("click", e => deleteActivity(m, e.currentTarget)); 
+    list.appendChild(node); 
+  }); 
+}
 function renderTeachers() { const list = byId("teacher-list"); list.innerHTML = ""; halaqahList().forEach(h => { const node = byId("teacher-item-template").content.cloneNode(true); node.querySelector(".teacher-halaqah").textContent = h.nama; node.querySelector(".teacher-name").textContent = h.guru; node.querySelector(".edit-teacher").addEventListener("click", () => openProfileModal("teacher", h)); node.querySelector(".delete-teacher").addEventListener("click", e => deleteTeacher(h, e.currentTarget)); list.appendChild(node); }); }
 function renderRekapBulanan() {
   const list = byId("rekap-grid-list"); list.innerHTML = ""; const bln = byId("rekap-bulan-input").value; const h = byId("rekap-halaqah").value, k = byId("rekap-kelas").value; if (!bln) { byId("rekap-grid-empty").textContent = "Pilih bulan."; byId("rekap-grid-empty").classList.remove("hidden"); return; } const students = studentList().filter(s => (!h || getHalaqahName(s) === h) && (!k || s.kelas === k)).sort((a, b) => a.nama.localeCompare(b.nama, "id")); if (students.length === 0) { byId("rekap-grid-empty").textContent = "Tidak ada santri."; byId("rekap-grid-empty").classList.remove("hidden"); return; } const acts = activityRecords().filter(r => r.tanggal && r.tanggal.startsWith(bln)); byId("rekap-grid-empty").classList.add("hidden");
