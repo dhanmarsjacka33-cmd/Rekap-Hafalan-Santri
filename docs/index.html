@@ -96,6 +96,7 @@
           <button id="nav-input" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="edit-3" style="width:16px;height:16px"></i> Input Data</button>
           <button id="nav-laporan" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="folder-open" style="width:16px;height:16px"></i> Mutasi & Rapor</button>
           <button id="nav-agenda" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="calendar" style="width:16px;height:16px"></i> Kalender</button>
+          <button id="nav-guru" class="nav-btn text-stone-300 font-semibold hover:text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap transition-colors"><i data-lucide="clipboard-check" style="width:16px;height:16px"></i> Rekap Guru</button>
         </nav>
       </div>
     </div>
@@ -450,6 +451,28 @@
       </div>
     </div>
 
+    <div id="view-guru" class="space-y-6 hidden soft-enter pb-24">
+      <section class="canva-card rounded-2xl p-5 shadow-sm">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+          <div><p class="text-xs font-bold uppercase tracking-wider text-emerald-700">Pemantauan Koordinator</p><h2 class="text-2xl font-bold mt-1">Rekap Aktivitas Guru</h2><p class="text-sm text-stone-500 mt-1">Indikator sementara berdasarkan pengisian setoran hafalan santri di setiap halaqah.</p></div>
+          <button type="button" onclick="renderTeacherActivity()" class="btn-outline gap-2 text-sm"><i data-lucide="refresh-cw" style="width:16px;height:16px"></i> Perbarui</button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <div class="rounded-xl bg-stone-50 border border-stone-200 p-4"><p class="text-xs text-stone-500">Total halaqah aktif</p><p id="teacher-activity-total" class="text-2xl font-bold mt-1">0</p></div>
+          <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p class="text-xs text-emerald-700">Sudah mengisi hari ini</p><p id="teacher-activity-done" class="text-2xl font-bold text-emerald-800 mt-1">0</p></div>
+          <div class="rounded-xl bg-rose-50 border border-rose-100 p-4"><p class="text-xs text-rose-700">Belum terdeteksi hari ini</p><p id="teacher-activity-pending" class="text-2xl font-bold text-rose-800 mt-1">0</p></div>
+        </div>
+        <div class="rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed p-3 mb-4"><strong>Catatan:</strong> Status ini bukan absensi fisik. Guru dianggap sudah mengisi jika ada setoran hafalan tercatat dari santri halaqahnya. Streak dihitung berdasarkan hari operasional yang terdeteksi dari adanya pengisian setoran di seluruh halaqah.</div>
+        <p id="teacher-activity-note" class="text-xs text-stone-500 mb-3"></p>
+        <div class="overflow-x-auto border border-stone-200 rounded-xl">
+          <table class="w-full min-w-[760px] text-sm text-left">
+            <thead class="bg-stone-100 text-stone-700"><tr><th class="px-4 py-3 font-semibold">Halaqah / Pengampu</th><th class="px-4 py-3 font-semibold">Status hari ini</th><th class="px-4 py-3 font-semibold text-center">Streak belum mengisi</th><th class="px-4 py-3 font-semibold">Terakhir mengisi</th><th class="px-4 py-3 font-semibold text-right">Tindak lanjut</th></tr></thead>
+            <tbody id="teacher-activity-list" class="bg-white"><tr><td colspan="5" class="px-4 py-8 text-center text-stone-500">Memuat data...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
     <div id="view-agenda" class="space-y-6 hidden soft-enter pb-24">
       <section class="canva-card rounded-2xl p-5 shadow-sm">
         <div class="flex justify-between items-start mb-4"><div><h2 class="text-xl font-bold">Kalender Agenda Tahfidz</h2><p class="text-stone-500 text-sm mt-1">Agenda pertemuan, ujian tahfidz, atau tasmi.</p></div><button id="add-agenda-btn" type="button" class="canva-button bg-[#1f6f54] hover:bg-[#165640] rounded-lg px-4 py-2 font-semibold inline-flex items-center gap-2 text-sm shadow-sm"><i data-lucide="calendar-plus" style="width:16px;height:16px"></i> Tambah Agenda</button></div>
@@ -557,6 +580,7 @@
   <button class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-input').click()"><i data-lucide="edit-3" style="width:22px;height:22px"></i><span class="text-[10px] font-bold">Input</span></button>
   <button class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-laporan').click()"><i data-lucide="folder-open" style="width:22px;height:22px"></i><span class="text-[10px] font-bold">Rapor</span></button>
   <button class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-agenda').click()"><i data-lucide="calendar" style="width:22px;height:22px"></i><span class="text-[10px] font-bold">Agenda</span></button>
+  <button id="nav-bottom-guru" class="nav-bottom-btn flex flex-col items-center gap-1 text-stone-400" onclick="document.getElementById('nav-guru').click()"><i data-lucide="clipboard-check" style="width:22px;height:22px"></i><span class="text-[10px] font-bold">Guru</span></button>
 </nav>
 
 <!-- TEMPLATES -->
