@@ -135,6 +135,7 @@ function applyRole() {
   if (byId("user-name-display")) byId("user-name-display").textContent = window.currentUser.username;
   if (byId("user-role-display")) byId("user-role-display").textContent = window.currentUser.role;
   if (byId("nav-guru")) byId("nav-guru").style.display = window.currentUser.role === 'Guru' ? 'none' : '';
+  if (byId("nav-bottom-guru")) byId("nav-bottom-guru").style.display = window.currentUser.role === 'Guru' ? 'none' : '';
 
   if (window.currentUser.role === 'Guru') {
     byId("tab-lap-3").style.display = "none";
