@@ -134,6 +134,7 @@ function applyRole() {
   if (!window.currentUser) return;
   if (byId("user-name-display")) byId("user-name-display").textContent = window.currentUser.username;
   if (byId("user-role-display")) byId("user-role-display").textContent = window.currentUser.role;
+  if (byId("nav-guru")) byId("nav-guru").style.display = window.currentUser.role === 'Guru' ? 'none' : '';
 
   if (window.currentUser.role === 'Guru') {
     byId("tab-lap-3").style.display = "none";
@@ -157,7 +158,7 @@ function initAppData() {
 // NAVIGATION
 const navBtns = document.querySelectorAll('.nav-btn');
 const bottomNavBtns = document.querySelectorAll('.nav-bottom-btn');
-const views = ['view-dashboard', 'view-input', 'view-laporan', 'view-agenda'];
+const views = ['view-dashboard', 'view-input', 'view-laporan', 'view-agenda', 'view-guru'];
 
 function syncNav(targetView) {
   navBtns.forEach(b => {
@@ -593,8 +594,103 @@ async function renderAuditLog() {
 
 async function initCalendar() { await ensureCalendarLoaded(); if (typeof FullCalendar === 'undefined') return; const calendarEl = byId('agenda-calendar-container'); if (!calendarEl) return; const agendaRecords = (window.records || []).filter(r => r.tipe === "agenda_tahfidz"); const events = agendaRecords.map(r => ({ id: r.__backendId, title: r.nama_santri, start: r.tanggal, color: r.status, extendedProps: { description: r.evaluasi } })); if (fullCalendarInstance) fullCalendarInstance.destroy(); fullCalendarInstance = new FullCalendar.Calendar(calendarEl, { initialView: 'dayGridMonth', locale: 'id', headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' }, events: events, eventClick: async function(info) { const detail = info.event.extendedProps.description ? `\nKeterangan: ${info.event.extendedProps.description}` : ""; if (confirm(`Agenda: ${info.event.title}${detail}\n\nHapus jadwal ini?`)) { const rec = (window.records || []).find(r => r.__backendId === info.event.id); if (rec) await window.dataSdk.delete(rec); } } }); }
 
+
+function teacherActivityRows() {
+  const halls = halaqahList();
+  const activeStudents = studentList();
+  const studentHall = new Map(activeStudents.map(s => [String(s.nama || '').trim().toLowerCase(), s.halaqah]));
+  const setoranRows = (window.records || []).filter(r => ['setoran', 'setoran_kehadiran'].includes(String(r.tipe || '').trim().toLowerCase()));
+  const dayKey = r => dateKey(r.tanggal);
+  const validRows = setoranRows.filter(r => dayKey(r));
+  const operationDates = [...new Set(validRows.map(dayKey))].sort();
+  const today = todayKey();
+  const hasGlobalToday = operationDates.includes(today);
+  const rows = halls.map(h => {
+    const hallName = String(h.nama || '').trim();
+    const hallRecords = validRows.filter(r => {
+      const recordedHall = String(r.halaqah || '').trim();
+      const mappedHall = studentHall.get(String(r.nama_santri || '').trim().toLowerCase()) || '';
+      return recordedHall === hallName || (!recordedHall && mappedHall === hallName);
+    });
+    const submittedDates = new Set(hallRecords.map(dayKey));
+    const ownDates = [...submittedDates].sort();
+    const lastDate = ownDates.length ? ownDates[ownDates.length - 1] : '';
+    let streak = 0;
+    for (let i = operationDates.length - 1; i >= 0; i--) {
+      const d = operationDates[i];
+      if (d > today) continue;
+      if (submittedDates.has(d)) break;
+      streak++;
+    }
+    const hasToday = submittedDates.has(today);
+    return {
+      nama: hallName,
+      guru: String(h.guru || 'Belum ditentukan').trim(),
+      streak,
+      hasToday,
+      lastDate,
+      todayPending: hasGlobalToday && !hasToday
+    };
+  });
+  return { rows, operationDates, hasGlobalToday };
+}
+
+function formatTeacherDate(value) {
+  if (!value) return 'Belum ada riwayat';
+  const d = new Date(value + 'T12:00:00');
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function openTeacherWhatsApp(guru, halaqah, streak, hasToday) {
+  const greeting = 'Assalamu’alaikum ' + guru + '.';
+  const detail = streak > 0
+    ? 'Berdasarkan rekap hafalan, halaqah ' + halaqah + ' belum tercatat mengisi selama ' + streak + ' hari kegiatan berturut-turut.'
+    : 'Kami belum menemukan pengisian rekap hafalan halaqah ' + halaqah + ' untuk hari ini.';
+  const message = greeting + '\\n\\n' + detail + '\\nMohon konfirmasi dan lengkapi rekap hafalan apabila kegiatan sudah dilaksanakan. Terima kasih.';
+  window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener');
+}
+
+function renderTeacherActivity() {
+  const list = byId('teacher-activity-list');
+  if (!list) return;
+  const data = teacherActivityRows();
+  const rows = data.rows.sort((a, b) => b.streak - a.streak || a.nama.localeCompare(b.nama, 'id', { numeric: true }));
+  const total = rows.length;
+  const sudah = rows.filter(r => r.hasToday).length;
+  const belum = total - sudah;
+  if (byId('teacher-activity-total')) byId('teacher-activity-total').textContent = total;
+  if (byId('teacher-activity-done')) byId('teacher-activity-done').textContent = sudah;
+  if (byId('teacher-activity-pending')) byId('teacher-activity-pending').textContent = belum;
+  const note = byId('teacher-activity-note');
+  if (note) note.textContent = data.hasGlobalToday
+    ? 'Hari ini sudah ada pengisian dari halaqah lain. Halaqah yang belum tercatat ditampilkan sebagai perlu ditindaklanjuti.'
+    : 'Belum ada aktivitas setoran yang tercatat hari ini. Status hari ini masih menunggu data pertama masuk.';
+  if (!rows.length) {
+    list.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-stone-500">Belum ada data halaqah aktif.</td></tr>';
+    return;
+  }
+  list.innerHTML = rows.map(r => {
+    const status = r.hasToday
+      ? '<span class="inline-flex rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-1 text-xs font-bold">Sudah mengisi</span>'
+      : (r.todayPending
+        ? '<span class="inline-flex rounded-full bg-rose-100 text-rose-700 px-2.5 py-1 text-xs font-bold">Belum mengisi hari ini</span>'
+        : '<span class="inline-flex rounded-full bg-amber-100 text-amber-800 px-2.5 py-1 text-xs font-bold">Menunggu data hari ini</span>');
+    const streakLabel = r.streak > 0
+      ? '<span class="font-bold text-rose-700">' + r.streak + ' hari</span>'
+      : '<span class="text-stone-400">0 hari</span>';
+    return '<tr class="border-b border-stone-100 hover:bg-stone-50">' +
+      '<td class="px-4 py-3"><div class="font-bold text-stone-800">' + esc(r.nama) + '</div><div class="text-xs text-stone-500 mt-0.5">' + esc(r.guru) + '</div></td>' +
+      '<td class="px-4 py-3">' + status + '</td>' +
+      '<td class="px-4 py-3 text-center">' + streakLabel + '</td>' +
+      '<td class="px-4 py-3 text-sm text-stone-600">' + esc(formatTeacherDate(r.lastDate)) + '</td>' +
+      '<td class="px-4 py-3 text-right"><button type="button" onclick="openTeacherWhatsApp(' + JSON.stringify(r.guru).replace(/</g, '\\u003c') + ',' + JSON.stringify(r.nama).replace(/</g, '\\u003c') + ',' + r.streak + ',' + r.hasToday + ')" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-bold whitespace-nowrap"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Ingatkan WA</button></td>' +
+      '</tr>';
+  }).join('');
+  if (window.lucide) lucide.createIcons();
+}
+
 function renderAll() {
-  populateAllFilters(); renderStats(); renderProgressionChart(); renderLeaderboard(); renderHistory(); renderTeachers(); renderMutasi(); renderRekapBulanan(); renderRekapUjianGlobal(); initCalendar(); 
+  populateAllFilters(); renderStats(); renderProgressionChart(); renderLeaderboard(); renderHistory(); renderTeachers(); renderMutasi(); renderRekapBulanan(); renderRekapUjianGlobal(); initCalendar(); renderTeacherActivity(); 
   if (window.lucide) lucide.createIcons();
   if (typeof window.renderRoster === 'function') window.renderRoster();
   if (byId("lap-3") && !byId("lap-3").classList.contains("hidden")) { populateAdminFilters(); renderAdminStudents(); renderAdminClasses(); renderAdminUsers(); }
