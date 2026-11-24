@@ -646,7 +646,7 @@ function openTeacherWhatsApp(guru, halaqah, streak, hasToday) {
   const detail = streak > 0
     ? 'Berdasarkan rekap hafalan, halaqah ' + halaqah + ' belum tercatat mengisi selama ' + streak + ' hari kegiatan berturut-turut.'
     : 'Kami belum menemukan pengisian rekap hafalan halaqah ' + halaqah + ' untuk hari ini.';
-  const message = greeting + '\\n\\n' + detail + '\\nMohon konfirmasi dan lengkapi rekap hafalan apabila kegiatan sudah dilaksanakan. Terima kasih.';
+  const message = greeting + '\n\n' + detail + '\nMohon konfirmasi dan lengkapi rekap hafalan apabila kegiatan sudah dilaksanakan. Terima kasih.;
   window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener');
 }
 
@@ -683,7 +683,7 @@ function renderTeacherActivity() {
       '<td class="px-4 py-3">' + status + '</td>' +
       '<td class="px-4 py-3 text-center">' + streakLabel + '</td>' +
       '<td class="px-4 py-3 text-sm text-stone-600">' + esc(formatTeacherDate(r.lastDate)) + '</td>' +
-      '<td class="px-4 py-3 text-right"><button type="button" onclick="openTeacherWhatsApp(' + JSON.stringify(r.guru).replace(/</g, '\\u003c') + ',' + JSON.stringify(r.nama).replace(/</g, '\\u003c') + ',' + r.streak + ',' + r.hasToday + ')" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-bold whitespace-nowrap"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Ingatkan WA</button></td>' +
+      '<td class="px-4 py-3 text-right"><button type="button" onclick="openTeacherWhatsApp(&quot;' + esc(r.guru) + '&quot;,&quot;' + esc(r.nama) + '&quot;,' + r.streak + ',' + r.hasToday + ')" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 text-xs font-bold whitespace-nowrap"><i data-lucide="message-circle" style="width:14px;height:14px"></i> Ingatkan WA</button></td>' +
       '</tr>';
   }).join('');
   if (window.lucide) lucide.createIcons();
