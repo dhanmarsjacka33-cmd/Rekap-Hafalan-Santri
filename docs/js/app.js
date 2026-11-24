@@ -646,7 +646,7 @@ function openTeacherWhatsApp(guru, halaqah, streak, hasToday) {
   const detail = streak > 0
     ? 'Berdasarkan rekap hafalan, halaqah ' + halaqah + ' belum tercatat mengisi selama ' + streak + ' hari kegiatan berturut-turut.'
     : 'Kami belum menemukan pengisian rekap hafalan halaqah ' + halaqah + ' untuk hari ini.';
-  const message = greeting + '\n\n' + detail + '\nMohon konfirmasi dan lengkapi rekap hafalan apabila kegiatan sudah dilaksanakan. Terima kasih.;
+  const message = greeting + '\n\n' + detail + '\nMohon konfirmasi dan lengkapi rekap hafalan apabila kegiatan sudah dilaksanakan. Terima kasih.';
   window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank', 'noopener');
 }
 
